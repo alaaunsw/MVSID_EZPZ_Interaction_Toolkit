@@ -9,33 +9,73 @@ public class VRTutorialController : MonoBehaviour
     public GameObject welcomeContent;
     public GameObject navigationInstructions;
 
-    [Header("New Navigation Panel")]
+    [Header("Navigation Panel")]
     public GameObject navigationPanel;
+    public TextMeshProUGUI navigationStatus;
+    public GameObject continueButton;
 
     [Header("3D Controller Demonstration")]
     public GameObject controllerTutorialDisplay;
 
+    [Header("Movement Tracking")]
+    public NavigationTrainingTracker navigationTracker;
+
+    private bool navigationCompleted;
+
     public void StartTraining()
     {
+        navigationCompleted = false;
+
         if (welcomeContent != null)
             welcomeContent.SetActive(false);
 
-        // Hide the old navigation instructions
         if (navigationInstructions != null)
             navigationInstructions.SetActive(false);
 
-        // Hide the old title to avoid duplicate headings
         if (titleText != null)
             titleText.gameObject.SetActive(false);
 
-        // Show the redesigned panel
         if (navigationPanel != null)
             navigationPanel.SetActive(true);
 
-        // Show the floating controller
         if (controllerTutorialDisplay != null)
             controllerTutorialDisplay.SetActive(true);
 
+        if (navigationStatus != null)
+            navigationStatus.text = "STEP 1 OF 4 | PRACTISE MOVEMENT";
+
+        if (continueButton != null)
+            continueButton.SetActive(false);
+
+        if (navigationTracker != null)
+            navigationTracker.BeginTracking();
+
         Debug.Log("Navigation training started!");
+    }
+
+    public void CompleteNavigation()
+    {
+        if (navigationCompleted)
+            return;
+
+        navigationCompleted = true;
+
+        if (navigationStatus != null)
+        {
+            navigationStatus.text =
+                "ACTIVITY 1 COMPLETE! WELL DONE.";
+        }
+
+        if (continueButton != null)
+            continueButton.SetActive(true);
+
+        Debug.Log("Activity 1 completed. Continue is available.");
+    }
+
+    public void ContinueToActivity2()
+    {
+        Debug.Log("Continue to Activity 2 selected.");
+
+        // Activity 2 will be connected next.
     }
 }
