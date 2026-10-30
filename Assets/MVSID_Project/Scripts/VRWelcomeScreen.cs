@@ -11,9 +11,26 @@ public class VRWelcomeScreen : MonoBehaviour
     public GameObject controllerDisplay;
 
     [Header("Settings")]
-    public int countdownSeconds = 5;
+    public int countdownSeconds = 10;
 
-    private TMP_Text countdownNumber;
+   private TMP_Text countdownNumber;
+
+private void Awake()
+{
+    if (welcomePanel == null)
+        return;
+
+    Transform numberObject = welcomePanel.transform.Find("CountdownNumber");
+
+    if (numberObject != null)
+    {
+        countdownNumber = numberObject.GetComponent<TMP_Text>();
+    }
+    else
+    {
+        Debug.LogError("CountdownNumber was not found inside WelcomePanel.");
+    }
+}
 
     void Start()
     {
@@ -173,16 +190,27 @@ else
     }
 
     IEnumerator WelcomeCountdown()
+{
+    if (countdownNumber == null)
     {
-        for (int seconds = countdownSeconds; seconds > 0; seconds--)
-        {
-            countdownNumber.text = seconds.ToString();
-            yield return new WaitForSeconds(1f);
-        }
+        Debug.LogError("CountdownNumber is not assigned.");
+        yield break;
+    }
 
-        welcomePanel.SetActive(false);
+    for (int seconds = countdownSeconds; seconds > 0; seconds--)
+    {
+        countdownNumber.text = seconds.ToString();
+
+        yield return new WaitForSeconds(1f);
+    }
+
+    countdownNumber.text = "0";
+
+    welcomePanel.SetActive(false);
+
+    if (activity1Panel != null)
         activity1Panel.SetActive(true);
 
-        Debug.Log("Welcome complete. Activity 1 started.");
-    }
+    Debug.Log("Welcome complete. Activity 1 started.");
+}
 }
