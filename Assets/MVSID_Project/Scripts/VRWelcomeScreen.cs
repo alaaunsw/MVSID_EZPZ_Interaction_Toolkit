@@ -30,18 +30,42 @@ public class VRWelcomeScreen : MonoBehaviour
             controllerDisplay.SetActive(false);
 
         welcomePanel.SetActive(true);
-        BuildWelcomeScreen();
+      
 
         StartCoroutine(WelcomeCountdown());
     }
+    #if UNITY_EDITOR
+[ContextMenu("Build Welcome Screen in Editor")]
+private void BuildWelcomeScreenInEditor()
+{
+    if (Application.isPlaying)
+        return;
 
+    if (welcomePanel == null)
+    {
+        Debug.LogError("Assign WelcomePanel first.");
+        return;
+    }
+
+    BuildWelcomeScreen();
+
+    Debug.Log("Welcome Screen generated in Edit Mode.");
+}
+#endif
     void BuildWelcomeScreen()
     {
         // Clear previous welcome content only.
         // Existing navigation and activity panels are untouched.
         for (int i = welcomePanel.transform.childCount - 1; i >= 0; i--)
         {
-            Destroy(welcomePanel.transform.GetChild(i).gameObject);
+            GameObject child = welcomePanel.transform.GetChild(i).gameObject;
+
+#if UNITY_EDITOR
+if (!Application.isPlaying)
+    DestroyImmediate(child);
+else
+#endif
+    Destroy(child);
         }
 
         RectTransform panel = welcomePanel.GetComponent<RectTransform>();

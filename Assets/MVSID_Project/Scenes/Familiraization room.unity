@@ -1133,6 +1133,7 @@ GameObject:
   - component: {fileID: 329534935}
   - component: {fileID: 329534936}
   - component: {fileID: 329534937}
+  - component: {fileID: 329534938}
   m_Layer: 0
   m_Name: VR_Tutorial_Canvas
   m_TagString: Untagged
@@ -1315,6 +1316,19 @@ MonoBehaviour:
   onStartTraining:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &329534938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 329534929}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 477446da8294b45419f1d176248b031f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VRSelectionPanelUI
+  selectionPanel: {fileID: 1722179508}
 --- !u!1 &411760478
 GameObject:
   m_ObjectHideFlags: 0
