@@ -9,6 +9,7 @@ public class VRWelcomeScreen : MonoBehaviour
     public GameObject welcomePanel;
     public GameObject activity1Panel;
     public GameObject controllerDisplay;
+    public GameObject rightControllerDisplay;
 
     [Header("Settings")]
     public int countdownSeconds = 10;
@@ -45,6 +46,9 @@ private void Awake()
 
         if (controllerDisplay != null)
             controllerDisplay.SetActive(false);
+
+            if (rightControllerDisplay != null)
+    rightControllerDisplay.SetActive(false);
 
         welcomePanel.SetActive(true);
       
@@ -210,6 +214,10 @@ else
 
     if (activity1Panel != null)
         activity1Panel.SetActive(true);
+
+        // Show right controller for Activity 1 — SELECT
+if (rightControllerDisplay != null)
+    rightControllerDisplay.SetActive(true);
 
     Debug.Log("Welcome complete. Activity 1 started.");
 }
