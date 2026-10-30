@@ -8,6 +8,12 @@ public class NavigationTrainingTracker : MonoBehaviour
     public Transform playerTransform;
     public float requiredDistance = 3f;
 
+    [Header("Navigation Target Zone")]
+    public GameObject navigationTargetZone;
+
+    [Header("Old Continue Button")]
+    public GameObject continueButton;
+
     [Header("Completion Event")]
     public UnityEvent onNavigationCompleted;
 
@@ -15,6 +21,17 @@ public class NavigationTrainingTracker : MonoBehaviour
     private float distanceTravelled;
     private bool tracking;
     private bool completed;
+
+    private void Start()
+    {
+        // Hide the zone until movement is completed.
+        if (navigationTargetZone != null)
+            navigationTargetZone.SetActive(false);
+
+        // The Continue button is no longer needed.
+        if (continueButton != null)
+            continueButton.SetActive(false);
+    }
 
     public void BeginTracking()
     {
@@ -29,10 +46,17 @@ public class NavigationTrainingTracker : MonoBehaviour
         completed = false;
         tracking = true;
 
+        // Hide the target until the user has moved enough.
+        if (navigationTargetZone != null)
+            navigationTargetZone.SetActive(false);
+
+        if (continueButton != null)
+            continueButton.SetActive(false);
+
         Debug.Log("Navigation tracking started.");
     }
 
-    void Update()
+    private void Update()
     {
         if (!tracking || completed || playerTransform == null)
             return;
@@ -60,7 +84,18 @@ public class NavigationTrainingTracker : MonoBehaviour
             completed = true;
             tracking = false;
 
-            Debug.Log("Navigation activity completed!");
+            Debug.Log(
+                "Movement completed! Navigation zone activated."
+            );
+
+            // Show the pulsing navigation zone.
+            if (navigationTargetZone != null)
+                navigationTargetZone.SetActive(true);
+
+            // Keep the old Continue button hidden.
+            if (continueButton != null)
+                continueButton.SetActive(false);
+
             onNavigationCompleted?.Invoke();
         }
     }
