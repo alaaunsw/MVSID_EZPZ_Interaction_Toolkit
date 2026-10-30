@@ -12,25 +12,29 @@ public class WhiteboardMouseInput : MonoBehaviour
     public float maxDrawingDistance = 5f;
     public bool useScreenCenter = true;
 
-    private bool wasDrawing;
+    private bool wasPainting;
+    private bool wasErasing;
 
     void Update()
     {
-        if (playerCamera == null || whiteboard == null)
-            return;
-
-        // New Unity Input System
-        if (Mouse.current == null)
-            return;
-
-        bool mouseHeld =
-            Mouse.current.leftButton.isPressed;
-
-        if (!mouseHeld)
+        if (playerCamera == null || whiteboard == null ||
+            Mouse.current == null)
         {
-            StopDrawing();
+            StopPainting();
             return;
         }
+
+        bool drawing = Mouse.current.leftButton.isPressed;
+        bool erasing = Mouse.current.rightButton.isPressed && !drawing;
+
+        if (!drawing && !erasing)
+        {
+            StopPainting();
+            return;
+        }
+
+        if (wasPainting && wasErasing != erasing)
+            whiteboard.EndStroke();
 
         Ray ray;
 
@@ -42,11 +46,8 @@ public class WhiteboardMouseInput : MonoBehaviour
         }
         else
         {
-            Vector2 mousePosition =
-                Mouse.current.position.ReadValue();
-
             ray = playerCamera.ScreenPointToRay(
-                mousePosition
+                Mouse.current.position.ReadValue()
             );
         }
 
@@ -55,36 +56,36 @@ public class WhiteboardMouseInput : MonoBehaviour
             out RaycastHit hit,
             maxDrawingDistance))
         {
-            if (hit.collider.gameObject ==
-                whiteboard.gameObject)
+            if (hit.collider.gameObject == whiteboard.gameObject)
             {
-                if (!wasDrawing)
-                {
+                if (!wasPainting || wasErasing != erasing)
                     whiteboard.BeginStroke();
-                    wasDrawing = true;
-                }
 
-                whiteboard.DrawAtUV(
-                    hit.textureCoord
-                );
+                if (erasing)
+                    whiteboard.EraseAtUV(hit.textureCoord);
+                else
+                    whiteboard.DrawAtUV(hit.textureCoord);
 
+                wasPainting = true;
+                wasErasing = erasing;
                 return;
             }
         }
 
-        StopDrawing();
+        StopPainting();
     }
 
-    private void StopDrawing()
+    private void StopPainting()
     {
-        if (wasDrawing && whiteboard != null)
+        if (wasPainting && whiteboard != null)
             whiteboard.EndStroke();
 
-        wasDrawing = false;
+        wasPainting = false;
+        wasErasing = false;
     }
 
     void OnDisable()
     {
-        StopDrawing();
+        StopPainting();
     }
 }
