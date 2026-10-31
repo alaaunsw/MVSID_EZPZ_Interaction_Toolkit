@@ -1,4 +1,4 @@
-
+using UnityEngine.Events;
 using UnityEngine;
 
 [RequireComponent(typeof(MeshRenderer))]
@@ -18,6 +18,11 @@ public class WhiteboardDrawing : MonoBehaviour
     private MeshRenderer boardRenderer;
 
     private Vector2? previousUV;
+
+        [Header("Writing Activity Completion")]
+    public UnityEvent onWritingCompleted;
+
+    private bool writingCompleted = false;
 
     void Start()
     {
@@ -68,15 +73,50 @@ public class WhiteboardDrawing : MonoBehaviour
         previousUV = null;
     }
 
-    public void DrawAtUV(Vector2 uv)
+   public void DrawAtUV(Vector2 uv)
+{
+    if (drawingTexture == null)
+        return;
+
+    PaintAtUV(uv, inkColor, brushSize);
+
+    if (!writingCompleted)
     {
-        PaintAtUV(uv, inkColor, brushSize);
+        writingCompleted = true;
+
+        Debug.Log("Writing activity completed!");
+
+        onWritingCompleted?.Invoke();
     }
+}
 
     public void EraseAtUV(Vector2 uv)
     {
         PaintAtUV(uv, backgroundColor, eraserSize);
     }
+
+    
+public void ClearBoard()
+{
+    if (drawingTexture == null)
+        return;
+
+    Color[] pixels = new Color[
+        drawingTexture.width * drawingTexture.height
+    ];
+
+    for (int i = 0; i < pixels.Length; i++)
+    {
+        pixels[i] = backgroundColor;
+    }
+
+    drawingTexture.SetPixels(pixels);
+    drawingTexture.Apply();
+
+    previousUV = null;
+
+    Debug.Log("Whiteboard cleared successfully!");
+}
 
     private void PaintAtUV(Vector2 uv, Color color, int size)
     {
