@@ -13,6 +13,12 @@ public class VRWelcomeScreen : MonoBehaviour
 
     [Header("Settings")]
     public int countdownSeconds = 10;
+    
+[Header("Countdown Audio")]
+public AudioSource countdownAudioSource;
+public AudioClip countdownTick;
+public AudioClip countdownComplete;
+
 
    private TMP_Text countdownNumber;
 
@@ -193,7 +199,8 @@ else
         return text;
     }
 
-    IEnumerator WelcomeCountdown()
+  
+IEnumerator WelcomeCountdown()
 {
     if (countdownNumber == null)
     {
@@ -203,22 +210,42 @@ else
 
     for (int seconds = countdownSeconds; seconds > 0; seconds--)
     {
+        // Display the current countdown number.
         countdownNumber.text = seconds.ToString();
+
+        // Play a tick exactly when 3, 2, or 1 appears.
+        if (seconds <= 3 &&
+            countdownAudioSource != null &&
+            countdownTick != null)
+        {
+            countdownAudioSource.PlayOneShot(countdownTick);
+        }
 
         yield return new WaitForSeconds(1f);
     }
 
+    // Countdown finished.
     countdownNumber.text = "0";
 
+    // Play the completion chime.
+    if (countdownAudioSource != null &&
+        countdownComplete != null)
+    {
+        countdownAudioSource.PlayOneShot(countdownComplete);
+    }
+
+    // Hide welcome panel.
     welcomePanel.SetActive(false);
 
+    // Show Activity 1 — SELECT.
     if (activity1Panel != null)
         activity1Panel.SetActive(true);
 
-        // Show right controller for Activity 1 — SELECT
-if (rightControllerDisplay != null)
-    rightControllerDisplay.SetActive(true);
+    // Show right controller for Activity 1.
+    if (rightControllerDisplay != null)
+        rightControllerDisplay.SetActive(true);
 
     Debug.Log("Welcome complete. Activity 1 started.");
 }
+
 }
