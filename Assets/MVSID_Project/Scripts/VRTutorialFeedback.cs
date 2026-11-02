@@ -1,5 +1,7 @@
 
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TMPro;
 
 public class VRTutorialFeedback : MonoBehaviour
@@ -14,35 +16,42 @@ public class VRTutorialFeedback : MonoBehaviour
     public TextMeshProUGUI grabText;
     public TextMeshProUGUI writeText;
 
-    [Header("Continue Button")]
+    [Header("Navigation Buttons")]
     public GameObject safetyRoomButton;
+    public GameObject redoTutorialButton;
+
+    [Header("Trainee Self-Assessment")]
+    public Toggle selectConfidence;
+    public Toggle navigateConfidence;
+    public Toggle grabConfidence;
+    public Toggle writeConfidence;
 
     [Header("Card Appearance")]
     public float activityFontSize = 28f;
     public float statusFontSize = 21f;
 
+    // Actual activity completion tracking.
     private bool selected;
     private bool navigated;
     private bool grabbed;
     private bool written;
 
-    private readonly Color completedColor =
-        new Color32(145, 233, 188, 255);
-
     private readonly Color pendingColor = Color.white;
 
     private void Start()
     {
-        // Prepare card formatting without opening feedback.
         FormatCard(selectText);
         FormatCard(navigateText);
         FormatCard(grabText);
         FormatCard(writeText);
 
-        if (safetyRoomButton != null)
-            safetyRoomButton.SetActive(false);
+        ResetConfidence();
+
+        if (welcomeContent != null)
+            welcomeContent.SetActive(false);
     }
 
+    // Called by the existing tutorial activities.
     public void CompleteSelect()
     {
         selected = true;
@@ -62,7 +71,20 @@ public class VRTutorialFeedback : MonoBehaviour
     {
         written = true;
     }
+    
+#if UNITY_EDITOR
+[ContextMenu("Preview Feedback Panel")]
+private void PreviewFeedbackPanel()
+{
+    if (Application.isPlaying)
+    {
+        ShowFeedback();
+    }
+}
+#endif
 
+
+    // Opens the feedback panel after the tutorial.
     public void ShowFeedback()
     {
         if (welcomeContent != null)
@@ -72,9 +94,9 @@ public class VRTutorialFeedback : MonoBehaviour
         {
             feedbackTitle.gameObject.SetActive(true);
             feedbackTitle.text =
-                "VR TUTORIAL — YOUR PROGRESS";
+                "VR TUTORIAL - YOUR PROGRESS";
 
-            feedbackTitle.fontSize = 34;
+            feedbackTitle.fontSize = 34f;
             feedbackTitle.alignment =
                 TextAlignmentOptions.Center;
         }
@@ -84,13 +106,57 @@ public class VRTutorialFeedback : MonoBehaviour
         UpdateCard(grabText, "GRAB", grabbed);
         UpdateCard(writeText, "WRITE", written);
 
-        bool allCompleted =
-            selected && navigated && grabbed && written;
-
-        if (safetyRoomButton != null)
-            safetyRoomButton.SetActive(allCompleted);
+        // Begin self-assessment with no boxes selected.
+        ResetConfidence();
 
         Debug.Log("Tutorial feedback displayed.");
+    }
+
+    // Connect this to each Toggle's On Value Changed.
+    public void UpdateConfidenceButtons()
+    {
+        bool allConfident =
+            selectConfidence != null &&
+            selectConfidence.isOn &&
+            navigateConfidence != null &&
+            navigateConfidence.isOn &&
+            grabConfidence != null &&
+            grabConfidence.isOn &&
+            writeConfidence != null &&
+            writeConfidence.isOn;
+
+        if (safetyRoomButton != null)
+            safetyRoomButton.SetActive(allConfident);
+
+        if (redoTutorialButton != null)
+            redoTutorialButton.SetActive(!allConfident);
+    }
+
+    private void ResetConfidence()
+    {
+        if (selectConfidence != null)
+            selectConfidence.SetIsOnWithoutNotify(false);
+
+        if (navigateConfidence != null)
+            navigateConfidence.SetIsOnWithoutNotify(false);
+
+        if (grabConfidence != null)
+            grabConfidence.SetIsOnWithoutNotify(false);
+
+        if (writeConfidence != null)
+            writeConfidence.SetIsOnWithoutNotify(false);
+
+        UpdateConfidenceButtons();
+    }
+
+    // Connect this to the Redo Tutorial button.
+    public void RedoTutorial()
+    {
+        Debug.Log("Restarting VR Familiarisation Tutorial.");
+
+        Scene currentScene = SceneManager.GetActiveScene();
+
+        SceneManager.LoadScene(currentScene.buildIndex);
     }
 
     private void FormatCard(TextMeshProUGUI text)
@@ -130,9 +196,10 @@ public class VRTutorialFeedback : MonoBehaviour
             ? "COMPLETED"
             : "NOT COMPLETED";
 
+        // Use text symbols supported by standard TMP fonts.
         string symbol = completed
-            ? "\u2713"
-            : "\u25CB";
+            ? "[OK]"
+            : "[ ]";
 
         string colorHex = completed
             ? "#91E9BC"
