@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 
 using UnityEngine;
 using UnityEditor;
@@ -148,3 +149,4 @@ public static class NavigationPanelGenerator
         text.raycastTarget = false;
     }
 }
+#endif

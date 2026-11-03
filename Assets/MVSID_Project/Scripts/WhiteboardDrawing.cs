@@ -61,6 +61,7 @@ public class WhiteboardDrawing : MonoBehaviour
             "_BaseColor",
             Color.white
         );
+        
     }
 
     public void BeginStroke()

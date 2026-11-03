@@ -1,0 +1,3 @@
+C:\Users\GEOSA\Documents\GitHub\MVSID_EZPZ_Interaction_Toolkit\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\Users\GEOSA\Documents\GitHub\MVSID_EZPZ_Interaction_Toolkit\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\FramePacing\CMakeLists.txt
+C:\Users\GEOSA\Documents\GitHub\MVSID_EZPZ_Interaction_Toolkit\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt
