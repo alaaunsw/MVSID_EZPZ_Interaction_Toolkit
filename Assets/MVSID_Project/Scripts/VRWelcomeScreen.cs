@@ -1,3 +1,4 @@
+
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,37 +14,48 @@ public class VRWelcomeScreen : MonoBehaviour
 
     [Header("Settings")]
     public int countdownSeconds = 10;
-    
-[Header("Countdown Audio")]
-public AudioSource countdownAudioSource;
-public AudioClip countdownTick;
-public AudioClip countdownComplete;
 
+    [Header("Countdown Audio")]
+    public AudioSource countdownAudioSource;
+    public AudioClip countdownTick;
+    public AudioClip countdownComplete;
 
-   private TMP_Text countdownNumber;
+    // NEW: Adjustable countdown sound volumes
+    [Header("Countdown Volume")]
+    [Range(0f, 1f)]
+    public float tickVolume = 0.25f;
 
-private void Awake()
-{
-    if (welcomePanel == null)
-        return;
+    [Range(0f, 1f)]
+    public float completionVolume = 0.25f;
 
-    Transform numberObject = welcomePanel.transform.Find("CountdownNumber");
+    private TMP_Text countdownNumber;
 
-    if (numberObject != null)
+    private void Awake()
     {
-        countdownNumber = numberObject.GetComponent<TMP_Text>();
-    }
-    else
-    {
-        Debug.LogError("CountdownNumber was not found inside WelcomePanel.");
-    }
-}
+        if (welcomePanel == null)
+            return;
 
-    void Start()
+        Transform numberObject =
+            welcomePanel.transform.Find("CountdownNumber");
+
+        if (numberObject != null)
+        {
+            countdownNumber =
+                numberObject.GetComponent<TMP_Text>();
+        }
+        else
+        {
+            Debug.LogError(
+                "CountdownNumber was not found inside WelcomePanel.");
+        }
+    }
+
+    private void Start()
     {
         if (welcomePanel == null || activity1Panel == null)
         {
-            Debug.LogError("Assign WelcomePanel and Activity 1 Panel.");
+            Debug.LogError(
+                "Assign WelcomePanel and Activity 1 Panel.");
             return;
         }
 
@@ -53,49 +65,54 @@ private void Awake()
         if (controllerDisplay != null)
             controllerDisplay.SetActive(false);
 
-            if (rightControllerDisplay != null)
-    rightControllerDisplay.SetActive(false);
+        if (rightControllerDisplay != null)
+            rightControllerDisplay.SetActive(false);
 
         welcomePanel.SetActive(true);
-      
 
         StartCoroutine(WelcomeCountdown());
     }
-    #if UNITY_EDITOR
-[ContextMenu("Build Welcome Screen in Editor")]
-private void BuildWelcomeScreenInEditor()
-{
-    if (Application.isPlaying)
-        return;
 
-    if (welcomePanel == null)
+#if UNITY_EDITOR
+    [ContextMenu("Build Welcome Screen in Editor")]
+    private void BuildWelcomeScreenInEditor()
     {
-        Debug.LogError("Assign WelcomePanel first.");
-        return;
+        if (Application.isPlaying)
+            return;
+
+        if (welcomePanel == null)
+        {
+            Debug.LogError("Assign WelcomePanel first.");
+            return;
+        }
+
+        BuildWelcomeScreen();
+
+        Debug.Log("Welcome Screen generated in Edit Mode.");
     }
-
-    BuildWelcomeScreen();
-
-    Debug.Log("Welcome Screen generated in Edit Mode.");
-}
 #endif
-    void BuildWelcomeScreen()
+
+    private void BuildWelcomeScreen()
     {
         // Clear previous welcome content only.
         // Existing navigation and activity panels are untouched.
-        for (int i = welcomePanel.transform.childCount - 1; i >= 0; i--)
+        for (int i = welcomePanel.transform.childCount - 1;
+             i >= 0; i--)
         {
-            GameObject child = welcomePanel.transform.GetChild(i).gameObject;
+            GameObject child =
+                welcomePanel.transform.GetChild(i).gameObject;
 
 #if UNITY_EDITOR
-if (!Application.isPlaying)
-    DestroyImmediate(child);
-else
+            if (!Application.isPlaying)
+                DestroyImmediate(child);
+            else
 #endif
-    Destroy(child);
+                Destroy(child);
         }
 
-        RectTransform panel = welcomePanel.GetComponent<RectTransform>();
+        RectTransform panel =
+            welcomePanel.GetComponent<RectTransform>();
+
         panel.anchorMin = new Vector2(0.5f, 0.5f);
         panel.anchorMax = new Vector2(0.5f, 0.5f);
         panel.pivot = new Vector2(0.5f, 0.5f);
@@ -103,67 +120,98 @@ else
         panel.sizeDelta = new Vector2(1000, 650);
         panel.localScale = Vector3.one;
 
-        Image background = welcomePanel.GetComponent<Image>();
+        Image background =
+            welcomePanel.GetComponent<Image>();
+
         if (background == null)
             background = welcomePanel.AddComponent<Image>();
 
-        background.color = new Color32(13, 27, 58, 255);
+        background.color =
+            new Color32(13, 27, 58, 255);
+
         background.raycastTarget = false;
 
         // Small top labels
-        AddText("TopLeft", "VR CONTROLS TRAINING",
-            18, new Vector2(-370, 275),
+        AddText(
+            "TopLeft",
+            "VR CONTROLS TRAINING",
+            18,
+            new Vector2(-370, 275),
             new Vector2(240, 35),
             new Color32(79, 224, 239, 255),
-            TextAlignmentOptions.Left);
+            TextAlignmentOptions.Left
+        );
 
-        AddText("TopRight", "WELCOME",
-            18, new Vector2(385, 275),
+        AddText(
+            "TopRight",
+            "WELCOME",
+            18,
+            new Vector2(385, 275),
             new Vector2(160, 35),
             new Color32(170, 190, 215, 255),
-            TextAlignmentOptions.Right);
+            TextAlignmentOptions.Right
+        );
 
         // Main heading
-        AddText("Heading", "WELCOME!",
-            64, new Vector2(0, 135),
+        AddText(
+            "Heading",
+            "WELCOME!",
+            64,
+            new Vector2(0, 135),
             new Vector2(850, 100),
             Color.white,
             TextAlignmentOptions.Center,
-            true);
+            true
+        );
 
         // Description
-        AddText("Description",
-            "This short tutorial will help you get familiar with the VR controllers and practise the basic skills you'll need during training.",
-            29, new Vector2(0, 35),
+        AddText(
+            "Description",
+            "This short tutorial will help you get familiar " +
+            "with the VR controllers and practise the basic " +
+            "skills you'll need during training.",
+            29,
+            new Vector2(0, 35),
             new Vector2(930, 100),
             Color.white,
-            TextAlignmentOptions.Center);
+            TextAlignmentOptions.Center
+        );
 
         // Countdown label
-        AddText("CountdownLabel",
+        AddText(
+            "CountdownLabel",
             "Your first activity begins in",
-            25, new Vector2(0, -75),
+            25,
+            new Vector2(0, -75),
             new Vector2(700, 45),
             new Color32(160, 185, 220, 255),
-            TextAlignmentOptions.Center);
+            TextAlignmentOptions.Center
+        );
 
         // Countdown number
-        countdownNumber = AddText("CountdownNumber",
+        countdownNumber = AddText(
+            "CountdownNumber",
             countdownSeconds.ToString(),
-            85, new Vector2(0, -155),
+            85,
+            new Vector2(0, -155),
             new Vector2(250, 100),
             new Color32(79, 224, 239, 255),
             TextAlignmentOptions.Center,
-            true);
+            true
+        );
 
-        AddText("SecondsLabel", "seconds",
-            23, new Vector2(0, -215),
+        AddText(
+            "SecondsLabel",
+            "seconds",
+            23,
+            new Vector2(0, -215),
             new Vector2(250, 40),
             new Color32(160, 185, 220, 255),
-            TextAlignmentOptions.Center);
+            TextAlignmentOptions.Center
+        );
     }
 
-    TMP_Text AddText(
+    private TMP_Text AddText(
         string objectName,
         string content,
         float fontSize,
@@ -173,19 +221,28 @@ else
         TextAlignmentOptions alignment,
         bool bold = false)
     {
-        GameObject obj = new GameObject(objectName,
-            typeof(RectTransform));
+        GameObject obj = new GameObject(
+            objectName,
+            typeof(RectTransform)
+        );
 
-        obj.transform.SetParent(welcomePanel.transform, false);
+        obj.transform.SetParent(
+            welcomePanel.transform,
+            false
+        );
 
-        RectTransform rect = obj.GetComponent<RectTransform>();
+        RectTransform rect =
+            obj.GetComponent<RectTransform>();
+
         rect.anchorMin = new Vector2(0.5f, 0.5f);
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = position;
         rect.sizeDelta = size;
 
-        TextMeshProUGUI text = obj.AddComponent<TextMeshProUGUI>();
+        TextMeshProUGUI text =
+            obj.AddComponent<TextMeshProUGUI>();
+
         text.text = content;
         text.fontSize = fontSize;
         text.color = color;
@@ -199,53 +256,62 @@ else
         return text;
     }
 
-  
-IEnumerator WelcomeCountdown()
-{
-    if (countdownNumber == null)
+    private IEnumerator WelcomeCountdown()
     {
-        Debug.LogError("CountdownNumber is not assigned.");
-        yield break;
-    }
-
-    for (int seconds = countdownSeconds; seconds > 0; seconds--)
-    {
-        // Display the current countdown number.
-        countdownNumber.text = seconds.ToString();
-
-        // Play a tick exactly when 3, 2, or 1 appears.
-        if (seconds <= 3 &&
-            countdownAudioSource != null &&
-            countdownTick != null)
+        if (countdownNumber == null)
         {
-            countdownAudioSource.PlayOneShot(countdownTick);
+            Debug.LogError(
+                "CountdownNumber is not assigned.");
+            yield break;
         }
 
-        yield return new WaitForSeconds(1f);
+        for (int seconds = countdownSeconds;
+             seconds > 0; seconds--)
+        {
+            // Display the current countdown number.
+            countdownNumber.text = seconds.ToString();
+
+            // Play tick when 3, 2, or 1 appears.
+            if (seconds <= 3 &&
+                countdownAudioSource != null &&
+                countdownTick != null)
+            {
+                // NEW: Use adjustable tick volume
+                countdownAudioSource.PlayOneShot(
+                    countdownTick,
+                    tickVolume
+                );
+            }
+
+            yield return new WaitForSeconds(1f);
+        }
+
+        // Countdown finished.
+        countdownNumber.text = "0";
+
+        // Play the completion chime.
+        if (countdownAudioSource != null &&
+            countdownComplete != null)
+        {
+            // NEW: Use adjustable completion volume
+            countdownAudioSource.PlayOneShot(
+                countdownComplete,
+                completionVolume
+            );
+        }
+
+        // Hide welcome panel.
+        welcomePanel.SetActive(false);
+
+        // Show Activity 1 — SELECT.
+        if (activity1Panel != null)
+            activity1Panel.SetActive(true);
+
+        // Show right controller for Activity 1.
+        if (rightControllerDisplay != null)
+            rightControllerDisplay.SetActive(true);
+
+        Debug.Log(
+            "Welcome complete. Activity 1 started.");
     }
-
-    // Countdown finished.
-    countdownNumber.text = "0";
-
-    // Play the completion chime.
-    if (countdownAudioSource != null &&
-        countdownComplete != null)
-    {
-        countdownAudioSource.PlayOneShot(countdownComplete);
-    }
-
-    // Hide welcome panel.
-    welcomePanel.SetActive(false);
-
-    // Show Activity 1 — SELECT.
-    if (activity1Panel != null)
-        activity1Panel.SetActive(true);
-
-    // Show right controller for Activity 1.
-    if (rightControllerDisplay != null)
-        rightControllerDisplay.SetActive(true);
-
-    Debug.Log("Welcome complete. Activity 1 started.");
-}
-
 }
