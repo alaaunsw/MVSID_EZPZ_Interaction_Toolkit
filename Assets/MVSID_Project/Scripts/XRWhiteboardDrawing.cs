@@ -28,7 +28,9 @@ public class XRWhiteboardDrawing : MonoBehaviour
         if (rightController == null ||
             whiteboardDrawing == null ||
             drawingSurfaceCollider == null)
+        {
             return;
+        }
 
         bool triggerPressed = false;
 
@@ -42,6 +44,8 @@ public class XRWhiteboardDrawing : MonoBehaviour
 
         if (triggerPressed)
         {
+            Debug.Log("XR TRIGGER DETECTED");
+
             Ray ray = new Ray(
                 rightController.position,
                 rightController.forward
@@ -52,17 +56,21 @@ public class XRWhiteboardDrawing : MonoBehaviour
                 out RaycastHit hit,
                 maxDrawDistance))
             {
+                Debug.Log(
+                    "XR RAY HIT BACKBOARD: " + hit.textureCoord
+                );
+
                 if (!wasDrawing)
                 {
                     whiteboardDrawing.BeginStroke();
                     wasDrawing = true;
                 }
 
-               Debug.Log("XR DRAW HIT! UV: " + hit.textureCoord);
+                whiteboardDrawing.DrawAtUV(hit.textureCoord);
 
-whiteboardDrawing.DrawAtUV(
-    hit.textureCoord
-);
+                Debug.Log(
+                    "XR DRAW HIT! UV: " + hit.textureCoord
+                );
             }
             else
             {
