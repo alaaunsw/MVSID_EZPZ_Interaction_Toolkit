@@ -14,7 +14,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/EZPZ b) Examples/a) Standalone Example Scenes/01 Item Cycling.unity
     guid: 7ecc1225d74d4454aad820312b981b7c
-  - enabled: 1
+  - enabled: 0
     path: Assets/MVSID_Project/Scenes/Familiraization room XR.unity
     guid: 0c0ddf81e92408c4aad5bfaef2bc1c7b
   - enabled: 1
