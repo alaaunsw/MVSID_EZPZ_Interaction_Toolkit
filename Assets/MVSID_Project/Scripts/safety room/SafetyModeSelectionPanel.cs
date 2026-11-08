@@ -10,8 +10,41 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     public GameObject identificationPanel;
     public GameObject modeSelectionPanel;
 
+    [Header("PPE Safety Checklist")]
+    public SafetyPPEChecklistPanel ppeChecklist;
+
     [Header("Current Selection")]
     public string selectedMode = "";
+
+    // ==========================================
+    // INITIALISATION
+    // ==========================================
+
+    private void Awake()
+    {
+        FindPanel();
+
+        if (ppeChecklist == null)
+        {
+            ppeChecklist =
+                GetComponent<SafetyPPEChecklistPanel>();
+        }
+
+        UpdateModeButtonLabels();
+        ConnectExistingButtons();
+    }
+
+    private void FindPanel()
+    {
+        if (modeSelectionPanel != null)
+            return;
+
+        Transform found =
+            transform.Find("ModeSelectionPanel");
+
+        if (found != null)
+            modeSelectionPanel = found.gameObject;
+    }
 
     // ==========================================
     // BUILD MODE SELECTION PANEL
@@ -48,33 +81,45 @@ public class SafetyModeSelectionPanel : MonoBehaviour
         RectTransform rect =
             panel.GetComponent<RectTransform>();
 
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchorMin =
+            new Vector2(0.5f, 0.5f);
 
-        rect.sizeDelta = new Vector2(850, 420);
+        rect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        rect.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        rect.sizeDelta =
+            new Vector2(850, 420);
+
         rect.anchoredPosition = Vector2.zero;
         rect.localScale = Vector3.one;
 
-        Image background = panel.GetComponent<Image>();
+        Image background =
+            panel.GetComponent<Image>();
 
         background.color =
             new Color32(123, 156, 173, 255);
 
-        // Title
+        // TITLE
         CreateText(
             panel.transform,
             "ModeTitle",
             "SELECT YOUR MODE",
-            43, 0, 140, 790, 65
+            43,
+            0, 140,
+            790, 65
         );
 
-        // Instructions
+        // INSTRUCTIONS
         CreateText(
             panel.transform,
             "ModeInstructions",
             "Choose a mode to continue.",
-            26, 0, 75, 750, 50
+            26,
+            0, 75,
+            750, 50
         );
 
         // TRAINING MODE
@@ -82,7 +127,8 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             panel.transform,
             "TrainingButton",
             "TRAINING MODE",
-            -205, -35, 390, 90
+            -205, -35,
+            390, 90
         );
 
         // TESTING MODE
@@ -90,19 +136,23 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             panel.transform,
             "TestingButton",
             "TESTING MODE",
-            205, -35, 390, 90
+            205, -35,
+            390, 90
         );
 
-        // Status
+        // STATUS
         CreateText(
             panel.transform,
             "ModeStatus",
             "",
-            22, 0, -145, 750, 50
+            22,
+            0, -145,
+            750, 50
         );
 
         modeSelectionPanel = panel;
 
+        UpdateModeButtonLabels();
         ConnectExistingButtons();
 
         modeSelectionPanel.SetActive(false);
@@ -110,25 +160,6 @@ public class SafetyModeSelectionPanel : MonoBehaviour
         Debug.Log(
             "Mode Selection Panel created successfully."
         );
-    }
-
-    // ==========================================
-    // INITIALISATION
-    // ==========================================
-
-    private void Awake()
-    {
-        if (modeSelectionPanel == null)
-        {
-            Transform found =
-                transform.Find("ModeSelectionPanel");
-
-            if (found != null)
-                modeSelectionPanel = found.gameObject;
-        }
-
-        UpdateModeButtonLabels();
-        ConnectExistingButtons();
     }
 
     // ==========================================
@@ -156,7 +187,9 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             return;
 
         Transform button =
-            modeSelectionPanel.transform.Find(buttonName);
+            modeSelectionPanel.transform.Find(
+                buttonName
+            );
 
         if (button == null)
             return;
@@ -175,7 +208,7 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     }
 
     // ==========================================
-    // BUTTON CONNECTIONS
+    // CONNECT EXISTING BUTTONS
     // ==========================================
 
     private void ConnectExistingButtons()
@@ -199,7 +232,9 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             return;
 
         Transform target =
-            modeSelectionPanel.transform.Find(buttonName);
+            modeSelectionPanel.transform.Find(
+                buttonName
+            );
 
         if (target == null)
             return;
@@ -220,11 +255,20 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
     public void OpenModeSelection()
     {
+        FindPanel();
+
         if (modeSelectionPanel == null)
+        {
+            Debug.LogError(
+                "Mode Selection Panel is missing."
+            );
             return;
+        }
 
         if (identificationPanel != null)
+        {
             identificationPanel.SetActive(false);
+        }
 
         UpdateModeButtonLabels();
 
@@ -247,17 +291,11 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     {
         selectedMode = "Training Mode";
 
-        SetStatus(
-            "Training Mode selected."
-        );
-
         Debug.Log(
             "Selected mode: Training Mode"
         );
 
-        // Next:
-        // Open PPE Safety Checklist.
-        // Then enter the Training Mode.
+        OpenPPEChecklist();
     }
 
     // ==========================================
@@ -268,17 +306,70 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     {
         selectedMode = "Testing Mode";
 
-        SetStatus(
-            "Testing Mode selected."
-        );
-
         Debug.Log(
             "Selected mode: Testing Mode"
         );
 
-        // Next:
-        // Open PPE Safety Checklist.
-        // Then enter the Testing Mode.
+        OpenPPEChecklist();
+    }
+
+    // ==========================================
+    // OPEN PPE CHECKLIST
+    // ==========================================
+
+    private void OpenPPEChecklist()
+    {
+        if (ppeChecklist == null)
+        {
+            ppeChecklist =
+                GetComponent<SafetyPPEChecklistPanel>();
+        }
+
+        if (ppeChecklist == null)
+        {
+            SetStatus(
+                "PPE Safety Checklist is not connected."
+            );
+
+            Debug.LogError(
+                "SafetyPPEChecklistPanel component missing."
+            );
+
+            return;
+        }
+
+        if (ppeChecklist.ppeChecklistPanel == null)
+        {
+            Transform found =
+                transform.Find("PPEChecklistPanel");
+
+            if (found != null)
+            {
+                ppeChecklist.ppeChecklistPanel =
+                    found.gameObject;
+            }
+        }
+
+        if (ppeChecklist.ppeChecklistPanel == null)
+        {
+            SetStatus(
+                "PPE Checklist Panel has not been built."
+            );
+
+            Debug.LogWarning(
+                "Build PPE Checklist Panel first."
+            );
+
+            return;
+        }
+
+        // Preserve the chosen Training/Testing mode.
+        ppeChecklist.OpenPPEChecklist(selectedMode);
+
+        Debug.Log(
+            "Opening PPE Checklist for: " +
+            selectedMode
+        );
     }
 
     // ==========================================
@@ -291,7 +382,9 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             return;
 
         Transform label =
-            modeSelectionPanel.transform.Find("ModeStatus");
+            modeSelectionPanel.transform.Find(
+                "ModeStatus"
+            );
 
         if (label == null)
             return;
@@ -325,12 +418,23 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
         obj.transform.SetParent(parent, false);
 
+        int uiLayer =
+            LayerMask.NameToLayer("UI");
+
+        if (uiLayer >= 0)
+            obj.layer = uiLayer;
+
         RectTransform rect =
             obj.GetComponent<RectTransform>();
 
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchorMin =
+            new Vector2(0.5f, 0.5f);
+
+        rect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        rect.pivot =
+            new Vector2(0.5f, 0.5f);
 
         rect.sizeDelta =
             new Vector2(width, height);
@@ -373,12 +477,23 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
         obj.transform.SetParent(parent, false);
 
+        int uiLayer =
+            LayerMask.NameToLayer("UI");
+
+        if (uiLayer >= 0)
+            obj.layer = uiLayer;
+
         RectTransform rect =
             obj.GetComponent<RectTransform>();
 
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchorMin =
+            new Vector2(0.5f, 0.5f);
+
+        rect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        rect.pivot =
+            new Vector2(0.5f, 0.5f);
 
         rect.sizeDelta =
             new Vector2(width, height);
@@ -397,14 +512,14 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
         button.targetGraphic = image;
 
-        // XR collider
+        // XR collider.
         BoxCollider collider =
             obj.AddComponent<BoxCollider>();
 
         collider.size =
             new Vector3(width, height, 10);
 
-        // EZPZ interaction component
+        // EZPZ Interaction Toolkit.
         obj.AddComponent<InteractableGeneral>();
 
         CreateText(
