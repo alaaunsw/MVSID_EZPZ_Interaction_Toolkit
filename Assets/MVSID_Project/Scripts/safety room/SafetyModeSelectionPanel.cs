@@ -13,8 +13,17 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     [Header("PPE Safety Checklist")]
     public SafetyPPEChecklistPanel ppeChecklist;
 
+    [Header("Trainee Progress")]
+    public SafetyTraineeProgressManager progressManager;
+
     [Header("Current Selection")]
     public string selectedMode = "";
+
+    private readonly Color normalButtonColour =
+        new Color32(24, 73, 102, 255);
+
+    private readonly Color lockedButtonColour =
+        new Color32(88, 107, 120, 255);
 
     // ==========================================
     // INITIALISATION
@@ -23,12 +32,7 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     private void Awake()
     {
         FindPanel();
-
-        if (ppeChecklist == null)
-        {
-            ppeChecklist =
-                GetComponent<SafetyPPEChecklistPanel>();
-        }
+        FindManagers();
 
         UpdateModeButtonLabels();
         ConnectExistingButtons();
@@ -44,6 +48,21 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
         if (found != null)
             modeSelectionPanel = found.gameObject;
+    }
+
+    private void FindManagers()
+    {
+        if (ppeChecklist == null)
+        {
+            ppeChecklist =
+                GetComponent<SafetyPPEChecklistPanel>();
+        }
+
+        if (progressManager == null)
+        {
+            progressManager =
+                FindFirstObjectByType<SafetyTraineeProgressManager>();
+        }
     }
 
     // ==========================================
@@ -78,21 +97,19 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
         panel.transform.SetParent(transform, false);
 
+        int uiLayer = LayerMask.NameToLayer("UI");
+
+        if (uiLayer >= 0)
+            panel.layer = uiLayer;
+
         RectTransform rect =
             panel.GetComponent<RectTransform>();
 
-        rect.anchorMin =
-            new Vector2(0.5f, 0.5f);
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
 
-        rect.anchorMax =
-            new Vector2(0.5f, 0.5f);
-
-        rect.pivot =
-            new Vector2(0.5f, 0.5f);
-
-        rect.sizeDelta =
-            new Vector2(850, 420);
-
+        rect.sizeDelta = new Vector2(850, 420);
         rect.anchoredPosition = Vector2.zero;
         rect.localScale = Vector3.one;
 
@@ -102,7 +119,6 @@ public class SafetyModeSelectionPanel : MonoBehaviour
         background.color =
             new Color32(123, 156, 173, 255);
 
-        // TITLE
         CreateText(
             panel.transform,
             "ModeTitle",
@@ -112,7 +128,6 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             790, 65
         );
 
-        // INSTRUCTIONS
         CreateText(
             panel.transform,
             "ModeInstructions",
@@ -122,7 +137,6 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             750, 50
         );
 
-        // TRAINING MODE
         CreateButton(
             panel.transform,
             "TrainingButton",
@@ -131,7 +145,6 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             390, 90
         );
 
-        // TESTING MODE
         CreateButton(
             panel.transform,
             "TestingButton",
@@ -140,7 +153,6 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             390, 90
         );
 
-        // STATUS
         CreateText(
             panel.transform,
             "ModeStatus",
@@ -163,8 +175,18 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     }
 
     // ==========================================
-    // UPDATE EXISTING BUTTON LABELS
+    // TRAINEE PROGRESS AND ACCESS
     // ==========================================
+
+    private bool IsTestingUnlocked()
+    {
+        FindManagers();
+
+        if (progressManager == null)
+            return false;
+
+        return progressManager.CanAccessTesting;
+    }
 
     private void UpdateModeButtonLabels()
     {
@@ -173,10 +195,52 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             "TRAINING MODE"
         );
 
-        SetButtonLabel(
-            "TestingButton",
-            "TESTING MODE"
-        );
+        if (IsTestingUnlocked())
+        {
+            SetButtonLabel(
+                "TestingButton",
+                "TESTING MODE"
+            );
+        }
+        else
+        {
+            SetButtonLabel(
+                "TestingButton",
+                "TESTING MODE - LOCKED"
+            );
+        }
+
+        UpdateTestingButtonAppearance();
+    }
+
+    private void UpdateTestingButtonAppearance()
+    {
+        if (modeSelectionPanel == null)
+            return;
+
+        Transform buttonTransform =
+            modeSelectionPanel.transform.Find(
+                "TestingButton"
+            );
+
+        if (buttonTransform == null)
+            return;
+
+        bool unlocked = IsTestingUnlocked();
+
+        Image image =
+            buttonTransform.GetComponent<Image>();
+
+        if (image != null)
+        {
+            image.color = unlocked
+                ? normalButtonColour
+                : lockedButtonColour;
+        }
+
+        // Keep the button interactable so the trainee
+        // receives an explanation when pressing it.
+        // Access is enforced inside ChooseTesting().
     }
 
     private void SetButtonLabel(
@@ -256,6 +320,7 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     public void OpenModeSelection()
     {
         FindPanel();
+        FindManagers();
 
         if (modeSelectionPanel == null)
         {
@@ -265,21 +330,45 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             return;
         }
 
+        if (progressManager == null)
+        {
+            Debug.LogWarning(
+                "Trainee Progress Manager is missing. " +
+                "Testing Mode will remain locked."
+            );
+        }
+        else
+        {
+            progressManager.RefreshProgress();
+        }
+
+        UpdateModeButtonLabels();
+
         if (identificationPanel != null)
         {
             identificationPanel.SetActive(false);
         }
 
-        UpdateModeButtonLabels();
-
         modeSelectionPanel.SetActive(true);
 
         selectedMode = "";
 
-        SetStatus("");
+        if (IsTestingUnlocked())
+        {
+            SetStatus(
+                "Training completed. Both modes are available."
+            );
+        }
+        else
+        {
+            SetStatus(
+                "Complete Training Mode to unlock Testing Mode."
+            );
+        }
 
         Debug.Log(
-            "Mode Selection Panel opened."
+            "Mode Selection opened. Testing unlocked: " +
+            IsTestingUnlocked()
         );
     }
 
@@ -287,24 +376,82 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     // TRAINING MODE
     // ==========================================
 
-    public void ChooseTraining()
+  
+public void ChooseTraining()
+{
+    selectedMode = "Training Mode";
+
+    Debug.Log("Training Mode started.");
+
+    // Hide the mode-selection interface.
+    if (modeSelectionPanel != null)
+        modeSelectionPanel.SetActive(false);
+
+    // Hide the old PPE checklist.
+    if (ppeChecklist != null &&
+        ppeChecklist.ppeChecklistPanel != null)
     {
-        selectedMode = "Training Mode";
-
-        Debug.Log(
-            "Selected mode: Training Mode"
-        );
-
-        OpenPPEChecklist();
+        ppeChecklist.ppeChecklistPanel.SetActive(false);
     }
 
+    
+    // NEW: Activate the PPE training start zone
+    FindFirstObjectByType<PPETrainingController>()?.BeginTraining();
+
+    // Do not open the PPE checklist.
+    // The player can now explore the PPE equipment.
+}
+
+
     // ==========================================
-    // TESTING MODE
+    // TESTING MODE - ACCESS RESTRICTION
     // ==========================================
 
     public void ChooseTesting()
     {
+        FindManagers();
+
+        if (progressManager == null)
+        {
+            selectedMode = "";
+
+            SetStatus(
+                "Trainee Progress Manager is not connected."
+            );
+
+            Debug.LogError(
+                "SafetyTraineeProgressManager missing."
+            );
+
+            return;
+        }
+
+        // Check the logged-in trainee's saved progress.
+        progressManager.LoadCurrentTraineeProgress();
+
+        if (!progressManager.CanAccessTesting)
+        {
+            selectedMode = "";
+
+            SetStatus(
+                "TESTING MODE LOCKED - Pass Training Mode first."
+            );
+
+            UpdateModeButtonLabels();
+
+            Debug.LogWarning(
+                "Testing Mode denied: training not passed."
+            );
+
+            // Do NOT open PPE Checklist.
+            return;
+        }
+
         selectedMode = "Testing Mode";
+
+        SetStatus(
+            "Testing Mode unlocked."
+        );
 
         Debug.Log(
             "Selected mode: Testing Mode"
@@ -319,11 +466,7 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
     private void OpenPPEChecklist()
     {
-        if (ppeChecklist == null)
-        {
-            ppeChecklist =
-                GetComponent<SafetyPPEChecklistPanel>();
-        }
+        FindManagers();
 
         if (ppeChecklist == null)
         {
@@ -363,7 +506,20 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             return;
         }
 
-        // Preserve the chosen Training/Testing mode.
+        // Additional guard against bypassing
+        // testing access through this method.
+        if (selectedMode == "Testing Mode" &&
+            !IsTestingUnlocked())
+        {
+            selectedMode = "";
+
+            SetStatus(
+                "TESTING MODE LOCKED - Pass Training Mode first."
+            );
+
+            return;
+        }
+
         ppeChecklist.OpenPPEChecklist(selectedMode);
 
         Debug.Log(
@@ -504,22 +660,20 @@ public class SafetyModeSelectionPanel : MonoBehaviour
         Image image =
             obj.GetComponent<Image>();
 
-        image.color =
-            new Color32(24, 73, 102, 255);
+        image.color = normalButtonColour;
 
         Button button =
             obj.GetComponent<Button>();
 
         button.targetGraphic = image;
 
-        // XR collider.
         BoxCollider collider =
             obj.AddComponent<BoxCollider>();
 
         collider.size =
             new Vector3(width, height, 10);
 
-        // EZPZ Interaction Toolkit.
+        // Preserve EZPZ Interaction Toolkit.
         obj.AddComponent<InteractableGeneral>();
 
         CreateText(
