@@ -14,23 +14,21 @@ public class SafetyPPEInfoPoint : MonoBehaviour
     public GameObject informationPanel;
 
     [Header("Animation Settings")]
-    public bool loopAnimation = true;
+    public bool loopAnimation = false;
     public bool closeWhenPlayerWalksAway = false;
 
     private Renderer[] pointRenderers;
     private Collider[] pointColliders;
     private VideoPlayer videoPlayer;
 
-    private bool playerIsClose = false;
-    private bool animationIsOpen = false;
-
-    // ==========================================
-    // INITIALISATION
-    // ==========================================
+    private bool playerIsClose;
+    private bool animationIsOpen;
+    private bool videoCompleted;
 
     private void Awake()
     {
-        if (playerCamera == null && Camera.main != null)
+        if (playerCamera == null &&
+            Camera.main != null)
         {
             playerCamera = Camera.main.transform;
         }
@@ -43,33 +41,41 @@ public class SafetyPPEInfoPoint : MonoBehaviour
 
         SetPointVisible(false);
 
-        if (informationPanel != null)
+        if (informationPanel == null)
+            return;
+
+        videoPlayer =
+            informationPanel.GetComponent<VideoPlayer>();
+
+        if (videoPlayer == null)
         {
             videoPlayer =
-                informationPanel.GetComponent<VideoPlayer>();
-
-            if (videoPlayer == null)
-            {
-                videoPlayer =
-                    informationPanel.GetComponentInChildren<VideoPlayer>(
-                        true
-                    );
-            }
-
-            if (videoPlayer != null)
-            {
-                videoPlayer.playOnAwake = false;
-                videoPlayer.isLooping = loopAnimation;
-                videoPlayer.Stop();
-            }
-
-            informationPanel.SetActive(false);
+                informationPanel.GetComponentInChildren<
+                    VideoPlayer>(true);
         }
+
+        if (videoPlayer != null)
+        {
+            videoPlayer.playOnAwake = false;
+            videoPlayer.isLooping = false;
+            videoPlayer.Stop();
+
+            // Detect when video playback reaches its end.
+            videoPlayer.loopPointReached +=
+                OnVideoFinished;
+        }
+
+        informationPanel.SetActive(false);
     }
 
-    // ==========================================
-    // PLAYER DISTANCE
-    // ==========================================
+    private void OnDestroy()
+    {
+        if (videoPlayer != null)
+        {
+            videoPlayer.loopPointReached -=
+                OnVideoFinished;
+        }
+    }
 
     private void Update()
     {
@@ -87,7 +93,8 @@ public class SafetyPPEInfoPoint : MonoBehaviour
             transform.position
         );
 
-        bool isClose = distance <= activationDistance;
+        bool isClose =
+            distance <= activationDistance;
 
         if (isClose != playerIsClose)
         {
@@ -104,10 +111,6 @@ public class SafetyPPEInfoPoint : MonoBehaviour
         }
     }
 
-    // ==========================================
-    // INTERACTION POINT VISIBILITY
-    // ==========================================
-
     private void SetPointVisible(bool visible)
     {
         foreach (Renderer renderer in pointRenderers)
@@ -123,43 +126,34 @@ public class SafetyPPEInfoPoint : MonoBehaviour
         }
     }
 
-    // ==========================================
-    // EZPZ PRIMARY INTERACTION
-    // ==========================================
-
+    // EZPZ On Primary Interact()
     public void OpenInformation()
     {
         if (!playerIsClose)
-        {
-            Debug.Log("Move closer to the PPE equipment.");
             return;
-        }
 
         if (informationPanel == null)
         {
             Debug.LogWarning(
-                "PPE animation display is not assigned."
+                "PPE animation panel not assigned."
             );
             return;
         }
 
         if (animationIsOpen)
         {
-            CloseInformation();
+            // Don't allow an extra click to interrupt
+            // the video-learning sequence.
+            return;
         }
-        else
-        {
-            PlayInformationAnimation();
-        }
-    }
 
-    // ==========================================
-    // PLAY ANIMATION
-    // ==========================================
+        PlayInformationAnimation();
+    }
 
     private void PlayInformationAnimation()
     {
-        // Automatically close the previous PPE animation.
+        videoCompleted = false;
+
         if (SafetyPPEAnimationManager.Instance != null)
         {
             SafetyPPEAnimationManager.Instance.Open(this);
@@ -168,65 +162,63 @@ public class SafetyPPEInfoPoint : MonoBehaviour
         informationPanel.SetActive(true);
         animationIsOpen = true;
 
-        if (videoPlayer == null)
-        {
-            videoPlayer =
-                informationPanel.GetComponent<VideoPlayer>();
-
-            if (videoPlayer == null)
-            {
-                videoPlayer =
-                    informationPanel.GetComponentInChildren<VideoPlayer>(
-                        true
-                    );
-            }
-        }
-
         if (videoPlayer != null)
         {
-            videoPlayer.isLooping = loopAnimation;
-
+            videoPlayer.isLooping = false;
             videoPlayer.Stop();
             videoPlayer.Play();
 
             Debug.Log(
-                "PPE animation started: " + gameObject.name
+                "PPE video started: " + gameObject.name
             );
         }
         else
         {
             Debug.LogWarning(
-                "Video Player component not found."
+                "VideoPlayer not found on " +
+                informationPanel.name
             );
         }
     }
 
-    // ==========================================
-    // CLOSE ANIMATION
-    // ==========================================
+    // Called automatically when playback finishes.
+    private void OnVideoFinished(VideoPlayer source)
+    {
+        if (!animationIsOpen ||
+            videoCompleted ||
+            source != videoPlayer)
+            return;
+
+        videoCompleted = true;
+
+        Debug.Log(
+            "PPE video finished: " + gameObject.name
+        );
+
+        PPETrainingController controller =
+            FindFirstObjectByType<PPETrainingController>();
+
+        if (controller != null)
+        {
+            controller.NotifyVideoFinished(this);
+        }
+    }
 
     public void CloseInformation()
     {
         if (videoPlayer != null)
-        {
             videoPlayer.Stop();
-        }
 
         if (informationPanel != null)
-        {
             informationPanel.SetActive(false);
-        }
 
         animationIsOpen = false;
 
-        // Inform the manager that this animation closed.
         if (SafetyPPEAnimationManager.Instance != null)
         {
-            SafetyPPEAnimationManager.Instance.NotifyClosed(this);
+            SafetyPPEAnimationManager.Instance.NotifyClosed(
+                this
+            );
         }
-
-        Debug.Log(
-            "PPE animation closed: " + gameObject.name
-        );
     }
 }
