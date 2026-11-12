@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: add763df1adaa724e9e15d9cb2bf06c5, type: 3}
+  m_Name: PIPE_0493_Data
+  m_EditorClassIdentifier: Assembly-CSharp::PipeInspectionData
+  pipeID: PIPE_0493
+  material: Carbon Steel
+  materialGrade: ASTM A106 Grade B
+  pipeSizeMM: 200
+  maximumPressurePSI: 150
+  temperatureC: 6.1
+  timeYears: 23
+  measurementsAvailable: 1
+  referenceThicknessMM: 11.11
+  remainingThicknessMM: 7.7
+  condition: 1
+  dataSource: Synthetic Training Dataset
