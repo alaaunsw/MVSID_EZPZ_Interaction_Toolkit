@@ -6038,7 +6038,8 @@ MonoBehaviour:
   inputLabel: {fileID: 0}
   answerInput: {fileID: 1284948277}
   feedbackText: {fileID: 1073128977}
-  nextStepButton: {fileID: 0}
+  checkAnswerButton: {fileID: 1149337056}
+  nextStepButton: {fileID: 1938255470}
   nextStepButtonText: {fileID: 0}
   tolerance: 0.01
   currentStep: 1
@@ -26880,7 +26881,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1938255471
 RectTransform:
   m_ObjectHideFlags: 0
@@ -26918,7 +26919,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 395923267}
         m_TargetAssemblyTypeName: GuidedMaterialLossTraining, Assembly-CSharp
-        m_MethodName: CheckAnswer
+        m_MethodName: NextStep
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
