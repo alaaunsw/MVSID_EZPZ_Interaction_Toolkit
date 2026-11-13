@@ -3,6 +3,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.SceneManagement;
+#endif
+
 public class InspectionOpeningLabels : MonoBehaviour
 {
     [Header("Physical Pipe Meshes")]
@@ -10,21 +15,10 @@ public class InspectionOpeningLabels : MonoBehaviour
     public Transform pipe0493;
     public Transform pipe0007;
 
-    [Header("Label Settings")]
+    [Header("Label Appearance")]
     public float heightAbovePipe = 0.9f;
     public float labelScale = 0.0025f;
     public bool faceCamera = true;
-
-    private GameObject[] labels = new GameObject[3];
-    private Canvas[] labelCanvases = new Canvas[3];
-    private Canvas[] markerCanvases = new Canvas[3];
-    private LineRenderer[] lines = new LineRenderer[3];
-
-    private Vector3[] markerPositions = new Vector3[3];
-
-    private Sprite roundedSprite;
-    private Sprite circleSprite;
-    private Material lineMaterial;
 
     private readonly Color navy =
         new Color32(23, 60, 106, 255);
@@ -32,188 +26,145 @@ public class InspectionOpeningLabels : MonoBehaviour
     private readonly Color paleBlue =
         new Color32(244, 248, 253, 255);
 
-    private void Start()
+    // No Start() generation.
+    // Labels are built and saved in Edit Mode.
+
+    [ContextMenu("Build Opening Labels")]
+    public void BuildOpeningLabels()
     {
-        roundedSprite = CreateSprite(64, 36, 9);
-        circleSprite = CreateSprite(64, 64, 32);
+        CreateLabel("PIPE_0043", pipe0043);
+        CreateLabel("PIPE_0493", pipe0493);
+        CreateLabel("PIPE_0007", pipe0007);
 
-        Shader shader = Shader.Find("Sprites/Default");
+        MarkSceneChanged();
 
-        if (shader != null)
-            lineMaterial = new Material(shader);
-
-        Transform[] pipes =
-        {
-            pipe0043,
-            pipe0493,
-            pipe0007
-        };
-
-        string[] ids =
-        {
-            "PIPE_0043",
-            "PIPE_0493",
-            "PIPE_0007"
-        };
-
-        for (int i = 0; i < 3; i++)
-        {
-            if (pipes[i] == null)
-            {
-                Debug.LogWarning(
-                    "Opening label pipe missing: " + ids[i]
-                );
-                continue;
-            }
-
-            Renderer renderer =
-                pipes[i].GetComponent<Renderer>();
-
-            if (renderer == null)
-            {
-                Debug.LogWarning(
-                    "Pipe has no Renderer: " + ids[i]
-                );
-                continue;
-            }
-
-            // Position marker near the upper pipe surface.
-            Bounds bounds = renderer.bounds;
-
-            markerPositions[i] = new Vector3(
-                bounds.center.x,
-                bounds.max.y + 0.03f,
-                bounds.center.z
-            );
-
-            CreateLabel(i, ids[i]);
-        }
+        Debug.Log("Opening labels created in the scene.");
     }
 
-    private void CreateLabel(int index, string pipeID)
+    private void CreateLabel(string pipeID, Transform pipe)
     {
-        GameObject root =
-            new GameObject(pipeID + "_OpeningLabel");
+        if (pipe == null)
+        {
+            Debug.LogWarning(
+                "Missing physical pipe for " + pipeID
+            );
+            return;
+        }
 
-        root.transform.SetParent(transform, true);
+        // Prevent duplicate labels.
+        if (transform.Find(pipeID + "_OpeningLabel") != null)
+        {
+            Debug.Log(pipeID + " label already exists.");
+            return;
+        }
 
-        labels[index] = root;
+        Renderer pipeRenderer =
+            pipe.GetComponent<Renderer>();
 
-        Vector3 labelPosition =
-            markerPositions[index] +
-            Vector3.up * heightAbovePipe;
+        if (pipeRenderer == null)
+        {
+            Debug.LogWarning(
+                "No Mesh Renderer found on " + pipeID
+            );
+            return;
+        }
 
-        // Floating ID card.
-        Canvas canvas = CreateCanvas(
+        Bounds bounds = pipeRenderer.bounds;
+
+        Vector3 markerPosition = new Vector3(
+            bounds.center.x,
+            bounds.max.y + 0.03f,
+            bounds.center.z
+        );
+
+        GameObject root = new GameObject(
+            pipeID + "_OpeningLabel",
+            typeof(RectTransform),
+            typeof(Canvas)
+        );
+
+        root.transform.SetParent(transform, false);
+
+        RectTransform rootRect =
+            root.GetComponent<RectTransform>();
+
+        rootRect.sizeDelta = new Vector2(220, 900);
+        rootRect.position = markerPosition;
+        rootRect.localScale =
+            Vector3.one * labelScale;
+
+        Canvas canvas = root.GetComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+
+        Camera camera = Camera.main;
+
+        if (camera != null)
+            rootRect.rotation = camera.transform.rotation;
+
+        float lineHeight =
+            heightAbovePipe / Mathf.Max(labelScale, 0.0001f);
+
+        // Connector: white vertical line.
+        CreateImage(
             root.transform,
-            "LabelCanvas",
-            labelPosition,
-            new Vector2(190, 54)
+            "ConnectorLine",
+            new Vector2(0, lineHeight * 0.5f),
+            new Vector2(4, lineHeight),
+            Color.white,
+            null
         );
 
-        labelCanvases[index] = canvas;
-
+        // Label background.
         Image background = CreateImage(
-            canvas.transform,
+            root.transform,
             "LabelBackground",
-            Vector2.zero,
-            new Vector2(190, 54),
+            new Vector2(0, lineHeight + 29),
+            new Vector2(194, 56),
             paleBlue,
-            roundedSprite
+            GetBuiltinSprite("UI/Skin/UISprite.psd")
         );
+
+        if (background.sprite != null)
+            background.type = Image.Type.Sliced;
 
         Outline outline =
             background.gameObject.AddComponent<Outline>();
 
         outline.effectColor = navy;
         outline.effectDistance =
-            new Vector2(1.5f, -1.5f);
+            new Vector2(1.2f, -1.2f);
 
+        // Pipe ID.
         CreateText(
-            canvas.transform,
+            root.transform,
             "PipeIDText",
             pipeID,
-            new Vector2(190, 46)
+            new Vector2(0, lineHeight + 29),
+            new Vector2(185, 49)
         );
 
-        // White connector line.
-        GameObject lineObj =
-            new GameObject("ConnectorLine");
-
-        lineObj.transform.SetParent(root.transform, false);
-
-        LineRenderer line =
-            lineObj.AddComponent<LineRenderer>();
-
-        lines[index] = line;
-
-        line.useWorldSpace = true;
-        line.positionCount = 2;
-        line.startWidth = 0.012f;
-        line.endWidth = 0.012f;
-        line.startColor = Color.white;
-        line.endColor = Color.white;
-        line.numCapVertices = 6;
-
-        if (lineMaterial != null)
-            line.material = lineMaterial;
-
-        // Circular marker positioned on the pipe.
-        Canvas marker = CreateCanvas(
-            root.transform,
-            "MarkerCanvas",
-            markerPositions[index],
-            new Vector2(28, 28)
-        );
-
-        markerCanvases[index] = marker;
+        // White outer circle.
+        Sprite circleSprite =
+            GetBuiltinSprite("UI/Skin/Knob.psd");
 
         CreateImage(
-            marker.transform,
-            "WhiteOuterCircle",
+            root.transform,
+            "ConnectorCircleOuter",
             Vector2.zero,
-            new Vector2(28, 28),
+            new Vector2(29, 29),
             Color.white,
             circleSprite
         );
 
+        // Blue centre.
         CreateImage(
-            marker.transform,
-            "BlueInnerCircle",
+            root.transform,
+            "ConnectorCircleInner",
             Vector2.zero,
-            new Vector2(18, 18),
+            new Vector2(19, 19),
             navy,
             circleSprite
         );
-
-        UpdateLine(index);
-    }
-
-    private Canvas CreateCanvas(
-        Transform parent,
-        string name,
-        Vector3 position,
-        Vector2 size)
-    {
-        GameObject obj = new GameObject(
-            name,
-            typeof(RectTransform),
-            typeof(Canvas)
-        );
-
-        obj.transform.SetParent(parent, false);
-        obj.transform.position = position;
-
-        Canvas canvas = obj.GetComponent<Canvas>();
-        canvas.renderMode = RenderMode.WorldSpace;
-
-        RectTransform rect =
-            obj.GetComponent<RectTransform>();
-
-        rect.sizeDelta = size;
-        rect.localScale = Vector3.one * labelScale;
-
-        return canvas;
     }
 
     private Image CreateImage(
@@ -235,22 +186,25 @@ public class InspectionOpeningLabels : MonoBehaviour
         RectTransform rect =
             obj.GetComponent<RectTransform>();
 
-        rect.sizeDelta = size;
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = position;
+        rect.sizeDelta = size;
 
-        Image img = obj.GetComponent<Image>();
+        Image image = obj.GetComponent<Image>();
+        image.sprite = sprite;
+        image.color = color;
+        image.raycastTarget = false;
 
-        img.sprite = sprite;
-        img.color = color;
-        img.raycastTarget = false;
-
-        return img;
+        return image;
     }
 
     private void CreateText(
         Transform parent,
         string name,
         string content,
+        Vector2 position,
         Vector2 size)
     {
         GameObject obj = new GameObject(
@@ -264,116 +218,38 @@ public class InspectionOpeningLabels : MonoBehaviour
         RectTransform rect =
             obj.GetComponent<RectTransform>();
 
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.sizeDelta = size;
-        rect.anchoredPosition = Vector2.zero;
+        rect.anchoredPosition = position;
 
         TextMeshProUGUI text =
             obj.GetComponent<TextMeshProUGUI>();
 
         text.text = content;
-        text.fontSize = 24;
+        text.fontSize = 25;
         text.fontStyle = FontStyles.Bold;
         text.color = navy;
         text.alignment = TextAlignmentOptions.Center;
         text.raycastTarget = false;
     }
 
-    // Generate rounded/circular sprites without
-    // requiring external image files.
-    private Sprite CreateSprite(
-        int width,
-        int height,
-        float radius)
+    private Sprite GetBuiltinSprite(string path)
     {
-        Texture2D texture = new Texture2D(
-            width, height, TextureFormat.RGBA32, false
-        );
-
-        texture.filterMode = FilterMode.Bilinear;
-
-        for (int y = 0; y < height; y++)
-        {
-            for (int x = 0; x < width; x++)
-            {
-                float dx = Mathf.Max(
-                    Mathf.Abs(x + 0.5f - width / 2f) -
-                    (width / 2f - radius), 0
-                );
-
-                float dy = Mathf.Max(
-                    Mathf.Abs(y + 0.5f - height / 2f) -
-                    (height / 2f - radius), 0
-                );
-
-                float distance = Mathf.Sqrt(dx * dx + dy * dy);
-
-                float alpha = Mathf.Clamp01(
-                    radius + 0.5f - distance
-                );
-
-                texture.SetPixel(
-                    x, y,
-                    new Color(1, 1, 1, alpha)
-                );
-            }
-        }
-
-        texture.Apply();
-
-        return Sprite.Create(
-            texture,
-            new Rect(0, 0, width, height),
-            new Vector2(0.5f, 0.5f),
-            100f
-        );
+#if UNITY_EDITOR
+        return AssetDatabase.GetBuiltinExtraResource<Sprite>(path);
+#else
+        return null;
+#endif
     }
 
-    private void UpdateLine(int index)
-    {
-        if (lines[index] == null ||
-            labelCanvases[index] == null)
-            return;
-
-        Vector3 labelBottom =
-            labelCanvases[index].transform.position -
-            Vector3.up * (54f * labelScale * 0.5f);
-
-        lines[index].SetPosition(0, labelBottom);
-        lines[index].SetPosition(
-            1, markerPositions[index]
-        );
-    }
-
-    private void LateUpdate()
-    {
-        Camera cam = Camera.main;
-
-        if (cam == null)
-            return;
-
-        for (int i = 0; i < 3; i++)
-        {
-            if (labelCanvases[i] == null)
-                continue;
-
-            if (faceCamera)
-            {
-                labelCanvases[i].transform.rotation =
-                    cam.transform.rotation;
-
-                markerCanvases[i].transform.rotation =
-                    cam.transform.rotation;
-            }
-
-            UpdateLine(i);
-        }
-    }
-
+    [ContextMenu("Show Opening Labels")]
     public void ShowLabels()
     {
         SetLabelsVisible(true);
     }
 
+    [ContextMenu("Hide Opening Labels")]
     public void HideLabels()
     {
         SetLabelsVisible(false);
@@ -381,10 +257,48 @@ public class InspectionOpeningLabels : MonoBehaviour
 
     private void SetLabelsVisible(bool visible)
     {
-        foreach (GameObject label in labels)
+        string[] ids =
         {
+            "PIPE_0043",
+            "PIPE_0493",
+            "PIPE_0007"
+        };
+
+        foreach (string id in ids)
+        {
+            Transform label =
+                transform.Find(id + "_OpeningLabel");
+
             if (label != null)
-                label.SetActive(visible);
+                label.gameObject.SetActive(visible);
         }
+
+        MarkSceneChanged();
+    }
+
+    private void LateUpdate()
+    {
+        if (!Application.isPlaying || !faceCamera)
+            return;
+
+        Camera cam = Camera.main;
+        if (cam == null)
+            return;
+
+        foreach (Transform child in transform)
+        {
+            if (child.name.EndsWith("_OpeningLabel"))
+                child.rotation = cam.transform.rotation;
+        }
+    }
+
+    private void MarkSceneChanged()
+    {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+            EditorSceneManager.MarkSceneDirty(
+                gameObject.scene
+            );
+#endif
     }
 }

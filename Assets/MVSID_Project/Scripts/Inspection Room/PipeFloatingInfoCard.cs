@@ -84,118 +84,149 @@ public class PipeFloatingInfoCard : MonoBehaviour
 
         // Background shadow
         MakeShape(
-            root, "CardShadow",
+            root,
+            "CardShadow",
             new Vector2(4, 66),
             new Vector2(490, 360),
             new Color(0f, 0f, 0f, 0.24f),
             15f
         );
 
-        // Rounded navy border
+        // Navy border
         MakeShape(
-            root, "CardBorder",
+            root,
+            "CardBorder",
             new Vector2(0, 70),
             new Vector2(488, 356),
-            navy, 16f
+            navy,
+            16f
         );
 
-        // Pale-blue main background
+        // Main information background
         Transform card = MakeShape(
-            root, "CardBackground",
+            root,
+            "CardBackground",
             new Vector2(0, 70),
             new Vector2(482, 350),
-            bodyBlue, 13f
+            bodyBlue,
+            13f
         ).transform;
 
-        // Header band
+        // Light-blue header
         MakeShape(
-            card, "HeaderBackground",
+            card,
+            "HeaderBackground",
             new Vector2(0, 140),
             new Vector2(478, 58),
-            headerBlue, 11f
+            headerBlue,
+            11f
         );
 
-        // Header title - left aligned
+        // Pipe identification title
         titleText = MakeText(
-            card, "PipeTitle",
+            card,
+            "PipeTitle",
             "PIPE_0493",
             new Vector2(0, 140),
             new Vector2(440, 46),
-            30, navy, true, false
+            30,
+            navy,
+            true,
+            false
         );
 
         // Header divider
         MakeShape(
-            card, "HeaderDivider",
+            card,
+            "HeaderDivider",
             new Vector2(0, 108),
             new Vector2(478, 2),
-            dividerColor, 0f
+            dividerColor,
+            0f
         );
 
+        // Updated training information labels.
+        // Thickness loss is intentionally not shown.
         string[] labels =
         {
             "Pipe Size (Diameter)",
             "Wall Thickness (Original)",
-            "Thickness Loss",
+            "Remaining Thickness",
             "Operating Pressure",
             "Operating Temperature",
             "Condition"
         };
 
-        // Six neatly arranged rows
+        // Six information rows
         for (int i = 0; i < labels.Length; i++)
         {
             float y = 82f - i * 43f;
 
             MakeText(
-                card, "Label" + (i + 1),
+                card,
+                "Label" + (i + 1),
                 labels[i],
                 new Vector2(-103, y),
                 new Vector2(255, 34),
-                20, labelColor, false, false
+                20,
+                labelColor,
+                false,
+                false
             );
 
             values[i] = MakeText(
-                card, "Value" + (i + 1),
+                card,
+                "Value" + (i + 1),
                 "-",
                 new Vector2(163, y),
                 new Vector2(118, 34),
-                20, valueColor, false, true
+                20,
+                valueColor,
+                false,
+                true
             );
 
             if (i < labels.Length - 1)
             {
                 MakeShape(
-                    card, "RowDivider" + (i + 1),
+                    card,
+                    "RowDivider" + (i + 1),
                     new Vector2(0, y - 21.5f),
                     new Vector2(460, 1.4f),
-                    dividerColor, 0f
+                    dividerColor,
+                    0f
                 );
             }
         }
 
-        // White line from bottom of card
+        // Connector line
         MakeShape(
-            root, "ConnectorLine",
+            root,
+            "ConnectorLine",
             new Vector2(0, -150),
             new Vector2(5, 90),
-            Color.white, 0f
+            Color.white,
+            0f
         );
 
-        // White circular ring
+        // Outer circular marker
         MakeShape(
-            root, "ConnectorCircleOuter",
+            root,
+            "ConnectorCircleOuter",
             new Vector2(0, -203),
             new Vector2(32, 32),
-            Color.white, 16f
+            Color.white,
+            16f
         );
 
-        // Navy centre
+        // Inner circular marker
         MakeShape(
-            root, "ConnectorCircleInner",
+            root,
+            "ConnectorCircleInner",
             new Vector2(0, -203),
             new Vector2(21, 21),
-            navy, 10.5f
+            navy,
+            10.5f
         );
 
         CacheUI();
@@ -203,7 +234,9 @@ public class PipeFloatingInfoCard : MonoBehaviour
 
         cardCanvas.gameObject.SetActive(false);
 
-        Debug.Log("Final pipe information card created.");
+        Debug.Log(
+            "Pipe information card created."
+        );
     }
 
     private PipeCardShape MakeShape(
@@ -215,7 +248,8 @@ public class PipeFloatingInfoCard : MonoBehaviour
         float radius)
     {
         GameObject obj = new GameObject(
-            name, typeof(RectTransform)
+            name,
+            typeof(RectTransform)
         );
 
         obj.transform.SetParent(parent, false);
@@ -226,6 +260,7 @@ public class PipeFloatingInfoCard : MonoBehaviour
         rt.anchorMin = new Vector2(0.5f, 0.5f);
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
+
         rt.anchoredPosition = position;
         rt.sizeDelta = size;
 
@@ -264,6 +299,7 @@ public class PipeFloatingInfoCard : MonoBehaviour
         rt.anchorMin = new Vector2(0.5f, 0.5f);
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
+
         rt.sizeDelta = size;
         rt.anchoredPosition = position;
 
@@ -272,10 +308,13 @@ public class PipeFloatingInfoCard : MonoBehaviour
 
         text.text = content;
         text.fontSize = fontSize;
-        text.fontStyle =
-            bold ? FontStyles.Bold : FontStyles.Normal;
+
+        text.fontStyle = bold
+            ? FontStyles.Bold
+            : FontStyles.Normal;
 
         text.color = color;
+
         text.alignment = rightAligned
             ? TextAlignmentOptions.Right
             : TextAlignmentOptions.Left;
@@ -320,10 +359,16 @@ public class PipeFloatingInfoCard : MonoBehaviour
         }
     }
 
+    // Retrieves the selected pipe's measurements.
     public void UpdateCard()
     {
         if (pipeTarget == null)
+        {
+            Debug.LogWarning(
+                "Pipe Target is not assigned."
+            );
             return;
+        }
 
         PipeInspectionData data =
             pipeTarget.GetInspectionData();
@@ -333,40 +378,71 @@ public class PipeFloatingInfoCard : MonoBehaviour
 
         CacheUI();
 
+        // Pipe ID
         if (titleText != null)
             titleText.text = data.pipeID;
 
+        // Pipe diameter
         if (values[0] != null)
+        {
             values[0].text =
-                data.pipeSizeMM.ToString("F1") + " mm";
+                data.pipeSizeMM.ToString("F1") +
+                " mm";
+        }
 
+        // Original wall thickness
         if (values[1] != null)
+        {
             values[1].text =
-                data.referenceThicknessMM.ToString("F2") + " mm";
+                data.referenceThicknessMM.ToString("F2") +
+                " mm";
+        }
 
+        // Remaining wall thickness
+        // The trainee uses this to calculate loss.
         if (values[2] != null)
+        {
             values[2].text =
-                data.MaterialLossMM.ToString("F2") + " mm";
+                data.remainingThicknessMM.ToString("F2") +
+                " mm";
+        }
 
+        // Maximum operating pressure
         if (values[3] != null)
+        {
             values[3].text =
-                data.maximumPressurePSI.ToString("F0") + " psi";
+                data.maximumPressurePSI.ToString("F0") +
+                " psi";
+        }
 
+        // Operating temperature
         if (values[4] != null)
+        {
             values[4].text =
-                data.temperatureC.ToString("F1") + "\u00B0C";
+                data.temperatureC.ToString("F1") +
+                "\u00B0C";
+        }
 
+        // Dataset condition classification
         if (values[5] != null)
+        {
             values[5].text =
                 data.condition.ToString();
+        }
     }
 
     public void ShowCard()
     {
         if (cardCanvas == null)
+        {
+            Debug.LogWarning(
+                "Inspection Card Canvas not assigned."
+            );
             return;
+        }
 
         UpdateCard();
+
         cardCanvas.gameObject.SetActive(true);
     }
 
@@ -393,15 +469,15 @@ public class PipeFloatingInfoCard : MonoBehaviour
     }
 }
 
-// Custom graphic for rounded rectangles and circles.
-// The triangle winding is corrected so that the
-// shapes render properly on a World Space Canvas.
+// Existing rounded UI graphic.
+// Kept for compatibility with your generated cards.
 public class PipeCardShape : MaskableGraphic
 {
     [Min(0f)]
     public float cornerRadius = 12f;
 
-    protected override void OnPopulateMesh(VertexHelper vh)
+    protected override void OnPopulateMesh(
+        VertexHelper vh)
     {
         vh.Clear();
 
@@ -413,23 +489,25 @@ public class PipeCardShape : MaskableGraphic
             Mathf.Min(r.width, r.height) * 0.5f
         );
 
-        // Use a standard rectangle when no rounding
-        // is required.
         if (radius <= 0.001f)
         {
             UIVertex v = UIVertex.simpleVert;
             v.color = color;
 
-            v.position = new Vector3(r.xMin, r.yMin, 0);
+            v.position =
+                new Vector3(r.xMin, r.yMin, 0);
             vh.AddVert(v);
 
-            v.position = new Vector3(r.xMin, r.yMax, 0);
+            v.position =
+                new Vector3(r.xMin, r.yMax, 0);
             vh.AddVert(v);
 
-            v.position = new Vector3(r.xMax, r.yMax, 0);
+            v.position =
+                new Vector3(r.xMax, r.yMax, 0);
             vh.AddVert(v);
 
-            v.position = new Vector3(r.xMax, r.yMin, 0);
+            v.position =
+                new Vector3(r.xMax, r.yMin, 0);
             vh.AddVert(v);
 
             vh.AddTriangle(0, 1, 2);
@@ -442,13 +520,28 @@ public class PipeCardShape : MaskableGraphic
 
         Vector2[] corners =
         {
-            new Vector2(r.xMax - radius, r.yMax - radius),
-            new Vector2(r.xMin + radius, r.yMax - radius),
-            new Vector2(r.xMin + radius, r.yMin + radius),
-            new Vector2(r.xMax - radius, r.yMin + radius)
+            new Vector2(
+                r.xMax - radius,
+                r.yMax - radius
+            ),
+            new Vector2(
+                r.xMin + radius,
+                r.yMax - radius
+            ),
+            new Vector2(
+                r.xMin + radius,
+                r.yMin + radius
+            ),
+            new Vector2(
+                r.xMax - radius,
+                r.yMin + radius
+            )
         };
 
-        float[] angles = { 0f, 90f, 180f, 270f };
+        float[] angles =
+        {
+            0f, 90f, 180f, 270f
+        };
 
         UIVertex vertex = UIVertex.simpleVert;
         vertex.color = color;
@@ -461,17 +554,19 @@ public class PipeCardShape : MaskableGraphic
             for (int i = 0; i <= segments; i++)
             {
                 float angle =
-                    (angles[corner] +
-                     i * 90f / segments) *
-                    Mathf.Deg2Rad;
+                    (
+                        angles[corner] +
+                        i * 90f / segments
+                    ) * Mathf.Deg2Rad;
 
-                Vector2 p = corners[corner] +
+                Vector2 point =
+                    corners[corner] +
                     new Vector2(
                         Mathf.Cos(angle),
                         Mathf.Sin(angle)
                     ) * radius;
 
-                vertex.position = p;
+                vertex.position = point;
                 vh.AddVert(vertex);
             }
         }
@@ -481,10 +576,14 @@ public class PipeCardShape : MaskableGraphic
         for (int i = 0; i < count; i++)
         {
             int current = i + 1;
-            int next = ((i + 1) % count) + 1;
+            int next =
+                ((i + 1) % count) + 1;
 
-            // Correct winding for Unity UI rendering.
-            vh.AddTriangle(0, next, current);
+            vh.AddTriangle(
+                0,
+                next,
+                current
+            );
         }
     }
 }
