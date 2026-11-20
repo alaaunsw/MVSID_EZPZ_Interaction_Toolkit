@@ -7,6 +7,12 @@ using UnityEngine;
 
 public class SafetyTraineeAccountManager : MonoBehaviour
 {
+    public static SafetyTraineeAccountManager Instance
+    {
+        get;
+        private set;
+    }
+
     [Serializable]
     public class TraineeAccount
     {
@@ -25,11 +31,19 @@ public class SafetyTraineeAccountManager : MonoBehaviour
     }
 
     [Header("Current Session")]
+
     [SerializeField]
     private string currentUsername = "";
 
     [SerializeField]
     private string currentTraineeId = "";
+
+    // NEW: Display current safety verification.
+
+    [Header("Safety Session Verification")]
+
+    [SerializeField]
+    private bool safetyTrainingVerified;
 
     private AccountDatabase database;
     private string filePath;
@@ -38,31 +52,130 @@ public class SafetyTraineeAccountManager : MonoBehaviour
     private const int SaltLength = 16;
     private const int HashLength = 32;
 
-    public string CurrentUsername => currentUsername;
-    public string CurrentTraineeId => currentTraineeId;
+    // ==========================================
+    // PUBLIC ACCOUNT PROPERTIES
+    // ==========================================
+
+    public string CurrentUsername =>
+        Instance != null && Instance != this
+        ? Instance.CurrentUsername
+        : currentUsername;
+
+    public string CurrentTraineeId =>
+        Instance != null && Instance != this
+        ? Instance.CurrentTraineeId
+        : currentTraineeId;
 
     public bool IsLoggedIn =>
-        !string.IsNullOrEmpty(currentTraineeId);
+        !string.IsNullOrEmpty(CurrentTraineeId);
+
+    // NEW: Current trainee safety verification.
+
+    public bool HasVerifiedSafetyTraining =>
+        IsLoggedIn &&
+        TraineeSafetySession.IsCompletedFor(
+            CurrentTraineeId
+        );
+
+    // ==========================================
+    // UNITY
+    // ==========================================
 
     private void Awake()
     {
+        // Keep one authoritative account manager.
+
+        if (Instance != null &&
+            Instance != this)
+        {
+            Debug.Log(
+                "An existing trainee account manager " +
+                "is already active."
+            );
+
+            return;
+        }
+
+        Instance = this;
+
+        // Preserve the manager across scenes.
+
+        if (transform.parent == null)
+        {
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Debug.LogError(
+                "SafetyTraineeAccountManager must be " +
+                "on a dedicated root GameObject " +
+                "to persist across scenes."
+            );
+        }
+
+        // Start without an authenticated trainee.
+
+        currentUsername = "";
+        currentTraineeId = "";
+
+        // NEW: Clear previous runtime safety status.
+
+        TraineeSafetySession.Clear();
+
+        safetyTrainingVerified = false;
+
         filePath = Path.Combine(
             Application.persistentDataPath,
             "trainee_accounts.json"
         );
 
         LoadAccounts();
+
+        Debug.Log(
+            "Persistent trainee account system ready."
+        );
     }
 
-    // ---------------------------------------
+    private void Update()
+    {
+        // NEW: Automatically display safety status
+        // in the Unity Inspector.
+
+        safetyTrainingVerified =
+            HasVerifiedSafetyTraining;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            TraineeSafetySession.Clear();
+
+            Instance = null;
+        }
+    }
+
+    // ==========================================
     // SIGN UP
-    // ---------------------------------------
+    // ==========================================
 
     public bool Register(
         string username,
         string password,
         out string message)
     {
+        // Forward requests to the persistent manager.
+
+        if (Instance != null &&
+            Instance != this)
+        {
+            return Instance.Register(
+                username,
+                password,
+                out message
+            );
+        }
+
         username = username?.Trim() ?? "";
 
         if (username.Length < 3 ||
@@ -70,6 +183,7 @@ public class SafetyTraineeAccountManager : MonoBehaviour
         {
             message =
                 "Username must contain 3-32 characters.";
+
             return false;
         }
 
@@ -78,16 +192,28 @@ public class SafetyTraineeAccountManager : MonoBehaviour
         {
             message =
                 "Password must contain at least 8 characters.";
+
+            return false;
+        }
+
+        if (database == null)
+        {
+            message =
+                "Account database is not available.";
+
             return false;
         }
 
         if (FindAccount(username) != null)
         {
-            message = "Username already exists.";
+            message =
+                "Username already exists.";
+
             return false;
         }
 
-        byte[] salt = new byte[SaltLength];
+        byte[] salt =
+            new byte[SaltLength];
 
         using (RandomNumberGenerator rng =
             RandomNumberGenerator.Create())
@@ -101,13 +227,23 @@ public class SafetyTraineeAccountManager : MonoBehaviour
             HashIterations
         );
 
-        TraineeAccount account = new TraineeAccount
+        TraineeAccount account =
+            new TraineeAccount
         {
-            id = Guid.NewGuid().ToString("N"),
-            username = username,
-            salt = Convert.ToBase64String(salt),
-            passwordHash = Convert.ToBase64String(hash),
-            iterations = HashIterations
+            id =
+                Guid.NewGuid().ToString("N"),
+
+            username =
+                username,
+
+            salt =
+                Convert.ToBase64String(salt),
+
+            passwordHash =
+                Convert.ToBase64String(hash),
+
+            iterations =
+                HashIterations
         };
 
         database.accounts.Add(account);
@@ -118,24 +254,39 @@ public class SafetyTraineeAccountManager : MonoBehaviour
 
             message =
                 "Could not save account. Please try again.";
+
             return false;
         }
 
+        // Start a new authenticated session.
+
         SetCurrentTrainee(account);
 
-        message = "Account created successfully.";
+        message =
+            "Account created successfully.";
+
         return true;
     }
 
-    // ---------------------------------------
+    // ==========================================
     // LOG IN
-    // ---------------------------------------
+    // ==========================================
 
     public bool Login(
         string username,
         string password,
         out string message)
     {
+        if (Instance != null &&
+            Instance != this)
+        {
+            return Instance.Login(
+                username,
+                password,
+                out message
+            );
+        }
+
         username = username?.Trim() ?? "";
 
         TraineeAccount account =
@@ -144,30 +295,38 @@ public class SafetyTraineeAccountManager : MonoBehaviour
         if (account == null ||
             string.IsNullOrEmpty(password))
         {
-            message = "Invalid username or password.";
+            message =
+                "Invalid username or password.";
+
             return false;
         }
 
         try
         {
             byte[] salt =
-                Convert.FromBase64String(account.salt);
+                Convert.FromBase64String(
+                    account.salt
+                );
 
             byte[] storedHash =
                 Convert.FromBase64String(
                     account.passwordHash
                 );
 
-            byte[] enteredHash = DerivePassword(
-                password,
-                salt,
-                account.iterations
-            );
+            byte[] enteredHash =
+                DerivePassword(
+                    password,
+                    salt,
+                    account.iterations
+                );
 
-            if (!HashesEqual(storedHash, enteredHash))
+            if (!HashesEqual(
+                storedHash,
+                enteredHash))
             {
                 message =
                     "Invalid username or password.";
+
                 return false;
             }
         }
@@ -175,18 +334,23 @@ public class SafetyTraineeAccountManager : MonoBehaviour
         {
             message =
                 "Account verification failed.";
+
             return false;
         }
 
+        // Start a new authenticated session.
+
         SetCurrentTrainee(account);
 
-        message = "Login successful.";
+        message =
+            "Login successful.";
+
         return true;
     }
 
-    // ---------------------------------------
+    // ==========================================
     // PASSWORD HASHING
-    // ---------------------------------------
+    // ==========================================
 
     private byte[] DerivePassword(
         string password,
@@ -200,7 +364,9 @@ public class SafetyTraineeAccountManager : MonoBehaviour
                 iterations,
                 HashAlgorithmName.SHA256))
         {
-            return pbkdf2.GetBytes(HashLength);
+            return pbkdf2.GetBytes(
+                HashLength
+            );
         }
     }
 
@@ -208,21 +374,28 @@ public class SafetyTraineeAccountManager : MonoBehaviour
         byte[] a,
         byte[] b)
     {
-        if (a == null || b == null ||
+        if (a == null ||
+            b == null ||
             a.Length != b.Length)
+        {
             return false;
+        }
 
         int difference = 0;
 
-        for (int i = 0; i < a.Length; i++)
+        for (int i = 0;
+             i < a.Length;
+             i++)
+        {
             difference |= a[i] ^ b[i];
+        }
 
         return difference == 0;
     }
 
-    // ---------------------------------------
+    // ==========================================
     // ACCOUNT LOOKUP
-    // ---------------------------------------
+    // ==========================================
 
     private TraineeAccount FindAccount(
         string username)
@@ -231,7 +404,7 @@ public class SafetyTraineeAccountManager : MonoBehaviour
             return null;
 
         foreach (TraineeAccount account
-            in database.accounts)
+                 in database.accounts)
         {
             if (string.Equals(
                 account.username,
@@ -245,34 +418,121 @@ public class SafetyTraineeAccountManager : MonoBehaviour
         return null;
     }
 
+    // ==========================================
+    // START TRAINEE SESSION
+    // ==========================================
+
     private void SetCurrentTrainee(
         TraineeAccount account)
     {
-        currentUsername = account.username;
-        currentTraineeId = account.id;
+        // NEW: Every successful login or registration
+        // begins a fresh safety verification session.
+
+        TraineeSafetySession.Clear();
+
+        safetyTrainingVerified = false;
+
+        currentUsername =
+            account.username;
+
+        currentTraineeId =
+            account.id;
 
         Debug.Log(
             "Trainee session started: " +
             currentUsername
         );
+
+        Debug.Log(
+            "New safety verification session started."
+        );
+
+        // Reload previously saved individual
+        // inspection training progress.
+
+        RefreshTraineeProgress();
     }
+
+    // ==========================================
+    // LOG OUT
+    // ==========================================
 
     public void Logout()
     {
+        if (Instance != null &&
+            Instance != this)
+        {
+            Instance.Logout();
+
+            return;
+        }
+
+        // NEW: Clear safety verification.
+
+        TraineeSafetySession.Clear();
+
+        safetyTrainingVerified = false;
+
         currentUsername = "";
         currentTraineeId = "";
+
+        // Clear the loaded runtime progress.
+        // Saved trainee progress is not deleted.
+
+        RefreshTraineeProgress();
+
+        Debug.Log(
+            "Trainee logged out successfully."
+        );
+
+        Debug.Log(
+            "Safety session verification cleared."
+        );
     }
 
-    // ---------------------------------------
+    // ==========================================
+    // REFRESH INDIVIDUAL TRAINEE PROGRESS
+    // ==========================================
+
+    private void RefreshTraineeProgress()
+    {
+        // Prefer the progress manager attached
+        // to this persistent account manager.
+
+        SafetyTraineeProgressManager manager =
+            GetComponent<
+                SafetyTraineeProgressManager
+            >();
+
+        if (manager == null)
+        {
+            manager =
+                FindFirstObjectByType<
+                    SafetyTraineeProgressManager
+                >();
+        }
+
+        if (manager != null)
+        {
+            manager.accountManager = this;
+
+            manager.RefreshProgress();
+        }
+    }
+
+    // ==========================================
     // SAVE ACCOUNT DATABASE
-    // ---------------------------------------
+    // ==========================================
 
     private bool SaveAccounts()
     {
         try
         {
             string json =
-                JsonUtility.ToJson(database, true);
+                JsonUtility.ToJson(
+                    database,
+                    true
+                );
 
             string temporaryPath =
                 filePath + ".tmp";
@@ -283,7 +543,9 @@ public class SafetyTraineeAccountManager : MonoBehaviour
             );
 
             if (File.Exists(filePath))
+            {
                 File.Delete(filePath);
+            }
 
             File.Move(
                 temporaryPath,
@@ -303,13 +565,14 @@ public class SafetyTraineeAccountManager : MonoBehaviour
         }
     }
 
-    // ---------------------------------------
+    // ==========================================
     // LOAD ACCOUNT DATABASE
-    // ---------------------------------------
+    // ==========================================
 
     private void LoadAccounts()
     {
-        database = new AccountDatabase();
+        database =
+            new AccountDatabase();
 
         if (!File.Exists(filePath))
             return;
@@ -320,9 +583,9 @@ public class SafetyTraineeAccountManager : MonoBehaviour
                 File.ReadAllText(filePath);
 
             AccountDatabase loaded =
-                JsonUtility.FromJson<AccountDatabase>(
-                    json
-                );
+                JsonUtility.FromJson<
+                    AccountDatabase
+                >(json);
 
             if (loaded != null &&
                 loaded.accounts != null)
@@ -337,5 +600,71 @@ public class SafetyTraineeAccountManager : MonoBehaviour
                 e.Message
             );
         }
+    }
+
+    // ==========================================
+    // CHECK CURRENT LOGIN SESSION
+    // ==========================================
+
+    [ContextMenu("Check Current Trainee Session")]
+    public void CheckCurrentTraineeSession()
+    {
+        if (!IsLoggedIn)
+        {
+            Debug.Log(
+                "No trainee is currently logged in."
+            );
+
+            return;
+        }
+
+        Debug.Log(
+            "Current trainee: " +
+            CurrentUsername
+        );
+
+        Debug.Log(
+            "Current trainee ID: " +
+            CurrentTraineeId
+        );
+
+        Debug.Log(
+            "Active scene: " +
+            UnityEngine.SceneManagement
+                .SceneManager
+                .GetActiveScene().name
+        );
+
+        Debug.Log(
+            "Safety training verified: " +
+            HasVerifiedSafetyTraining
+        );
+
+        SafetyTraineeAccountManager activeManager =
+            Instance != null ? Instance : this;
+
+        SafetyTraineeProgressManager manager =
+            activeManager.GetComponent<
+                SafetyTraineeProgressManager
+            >();
+
+        if (manager != null)
+        {
+            Debug.Log(
+                "Successful training sessions: " +
+                manager.SuccessfulTrainingSessions +
+                " / " +
+                manager.RequiredTrainingSessions
+            );
+
+            Debug.Log(
+                "Testing access: " +
+                manager.CanAccessTesting
+            );
+        }
+
+        Debug.Log(
+            "Trainee session is active."
+        );
     }
 }

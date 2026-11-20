@@ -15,9 +15,16 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
     [Header("Trainee Progress")]
     public SafetyTraineeProgressManager progressManager;
+    public SafetyTraineeAccountManager accountManager;
 
     [Header("Current Selection")]
     public string selectedMode = "";
+
+    [Header("Current Trainee Training Progress")]
+    [SerializeField] private int successfulTrainingSessions;
+    [SerializeField] private int requiredTrainingSessions;
+    [SerializeField] private int remainingTrainingSessions;
+    [SerializeField] private bool testingUnlocked;
 
     private readonly Color normalButtonColour =
         new Color32(24, 73, 102, 255);
@@ -50,6 +57,10 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             modeSelectionPanel = found.gameObject;
     }
 
+    // ==========================================
+    // FIND PERSISTENT TRAINEE MANAGERS
+    // ==========================================
+
     private void FindManagers()
     {
         if (ppeChecklist == null)
@@ -58,11 +69,100 @@ public class SafetyModeSelectionPanel : MonoBehaviour
                 GetComponent<SafetyPPEChecklistPanel>();
         }
 
+        if (SafetyTraineeAccountManager.Instance != null)
+        {
+            accountManager =
+                SafetyTraineeAccountManager.Instance;
+        }
+        else if (accountManager == null)
+        {
+            accountManager =
+                FindFirstObjectByType<
+                    SafetyTraineeAccountManager
+                >();
+        }
+
+        // Prefer the persistent progress manager
+        // attached to the account manager.
+
+        if (accountManager != null)
+        {
+            SafetyTraineeProgressManager persistentManager =
+                accountManager.GetComponent<
+                    SafetyTraineeProgressManager
+                >();
+
+            if (persistentManager != null)
+            {
+                progressManager =
+                    persistentManager;
+            }
+        }
+
         if (progressManager == null)
         {
             progressManager =
-                FindFirstObjectByType<SafetyTraineeProgressManager>();
+                FindFirstObjectByType<
+                    SafetyTraineeProgressManager
+                >();
         }
+    }
+
+    // ==========================================
+    // CHECK LOGGED-IN TRAINEE
+    // ==========================================
+
+    private bool HasLoggedInTrainee()
+    {
+        FindManagers();
+
+        return accountManager != null &&
+               accountManager.IsLoggedIn;
+    }
+
+    // ==========================================
+    // REFRESH SAVED TRAINING PROGRESS
+    // ==========================================
+
+    public void RefreshTrainingProgress()
+    {
+        FindManagers();
+
+        if (progressManager == null)
+        {
+            successfulTrainingSessions = 0;
+            requiredTrainingSessions = 1;
+            remainingTrainingSessions = 1;
+            testingUnlocked = false;
+
+            return;
+        }
+
+        progressManager.RefreshProgress();
+
+        requiredTrainingSessions =
+            progressManager.RequiredTrainingSessions;
+
+        if (!HasLoggedInTrainee())
+        {
+            successfulTrainingSessions = 0;
+
+            remainingTrainingSessions =
+                requiredTrainingSessions;
+
+            testingUnlocked = false;
+
+            return;
+        }
+
+        successfulTrainingSessions =
+            progressManager.SuccessfulTrainingSessions;
+
+        remainingTrainingSessions =
+            progressManager.RemainingTrainingSessions;
+
+        testingUnlocked =
+            progressManager.CanAccessTesting;
     }
 
     // ==========================================
@@ -95,9 +195,12 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             typeof(Image)
         );
 
-        panel.transform.SetParent(transform, false);
+        panel.transform.SetParent(
+            transform, false
+        );
 
-        int uiLayer = LayerMask.NameToLayer("UI");
+        int uiLayer =
+            LayerMask.NameToLayer("UI");
 
         if (uiLayer >= 0)
             panel.layer = uiLayer;
@@ -105,13 +208,23 @@ public class SafetyModeSelectionPanel : MonoBehaviour
         RectTransform rect =
             panel.GetComponent<RectTransform>();
 
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchorMin =
+            new Vector2(0.5f, 0.5f);
 
-        rect.sizeDelta = new Vector2(850, 420);
-        rect.anchoredPosition = Vector2.zero;
-        rect.localScale = Vector3.one;
+        rect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        rect.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        rect.sizeDelta =
+            new Vector2(850, 420);
+
+        rect.anchoredPosition =
+            Vector2.zero;
+
+        rect.localScale =
+            Vector3.one;
 
         Image background =
             panel.GetComponent<Image>();
@@ -175,18 +288,26 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     }
 
     // ==========================================
-    // TRAINEE PROGRESS AND ACCESS
+    // TESTING MODE ELIGIBILITY
     // ==========================================
 
     private bool IsTestingUnlocked()
     {
         FindManagers();
 
-        if (progressManager == null)
+        if (accountManager == null ||
+            !accountManager.IsLoggedIn ||
+            progressManager == null)
+        {
             return false;
+        }
 
         return progressManager.CanAccessTesting;
     }
+
+    // ==========================================
+    // UPDATE BUTTON LABELS
+    // ==========================================
 
     private void UpdateModeButtonLabels()
     {
@@ -195,7 +316,9 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             "TRAINING MODE"
         );
 
-        if (IsTestingUnlocked())
+        testingUnlocked = IsTestingUnlocked();
+
+        if (testingUnlocked)
         {
             SetButtonLabel(
                 "TestingButton",
@@ -213,6 +336,10 @@ public class SafetyModeSelectionPanel : MonoBehaviour
         UpdateTestingButtonAppearance();
     }
 
+    // ==========================================
+    // UPDATE TESTING BUTTON APPEARANCE
+    // ==========================================
+
     private void UpdateTestingButtonAppearance()
     {
         if (modeSelectionPanel == null)
@@ -226,7 +353,8 @@ public class SafetyModeSelectionPanel : MonoBehaviour
         if (buttonTransform == null)
             return;
 
-        bool unlocked = IsTestingUnlocked();
+        bool unlocked =
+            IsTestingUnlocked();
 
         Image image =
             buttonTransform.GetComponent<Image>();
@@ -238,10 +366,17 @@ public class SafetyModeSelectionPanel : MonoBehaviour
                 : lockedButtonColour;
         }
 
-        // Keep the button interactable so the trainee
-        // receives an explanation when pressing it.
-        // Access is enforced inside ChooseTesting().
+        // Keep the existing button interactable.
+        //
+        // When locked, pressing it displays the
+        // remaining training session requirement.
+        //
+        // Actual access is enforced in ChooseTesting().
     }
+
+    // ==========================================
+    // SET BUTTON LABEL
+    // ==========================================
 
     private void SetButtonLabel(
         string buttonName,
@@ -265,10 +400,72 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             return;
 
         TextMeshProUGUI text =
-            textTransform.GetComponent<TextMeshProUGUI>();
+            textTransform.GetComponent<
+                TextMeshProUGUI
+            >();
 
         if (text != null)
+        {
             text.text = newLabel;
+        }
+    }
+
+    // ==========================================
+    // DISPLAY TRAINEE SESSION PROGRESS
+    // ==========================================
+
+    private void UpdateTrainingProgressStatus()
+    {
+        RefreshTrainingProgress();
+
+        if (progressManager == null)
+        {
+            SetStatus(
+                "Trainee Progress Manager is unavailable."
+            );
+
+            return;
+        }
+
+        if (!HasLoggedInTrainee())
+        {
+            SetStatus(
+                "Please log in to access training."
+            );
+
+            return;
+        }
+
+        string progressText =
+            "Training sessions completed: " +
+            successfulTrainingSessions +
+            " / " +
+            requiredTrainingSessions;
+
+        if (testingUnlocked)
+        {
+            SetStatus(
+                progressText +
+                "\nIndependent Testing is unlocked."
+            );
+        }
+        else
+        {
+            string remainingMessage =
+                remainingTrainingSessions +
+                " more training " +
+                (
+                    remainingTrainingSessions == 1
+                    ? "session required."
+                    : "sessions required."
+                );
+
+            SetStatus(
+                progressText +
+                "\n" +
+                remainingMessage
+            );
+        }
     }
 
     // ==========================================
@@ -327,22 +524,35 @@ public class SafetyModeSelectionPanel : MonoBehaviour
             Debug.LogError(
                 "Mode Selection Panel is missing."
             );
+
             return;
         }
 
-        if (progressManager == null)
+        if (!HasLoggedInTrainee())
         {
             Debug.LogWarning(
-                "Trainee Progress Manager is missing. " +
-                "Testing Mode will remain locked."
+                "Mode selection cannot open. " +
+                "No trainee is currently logged in."
             );
-        }
-        else
-        {
-            progressManager.RefreshProgress();
+
+            if (identificationPanel != null)
+            {
+                identificationPanel.SetActive(true);
+            }
+
+            modeSelectionPanel.SetActive(false);
+
+            return;
         }
 
+        // Load this trainee's saved training
+        // repetitions from individual storage.
+
+        RefreshTrainingProgress();
+
         UpdateModeButtonLabels();
+
+        ConnectExistingButtons();
 
         if (identificationPanel != null)
         {
@@ -353,22 +563,23 @@ public class SafetyModeSelectionPanel : MonoBehaviour
 
         selectedMode = "";
 
-        if (IsTestingUnlocked())
-        {
-            SetStatus(
-                "Training completed. Both modes are available."
-            );
-        }
-        else
-        {
-            SetStatus(
-                "Complete Training Mode to unlock Testing Mode."
-            );
-        }
+        UpdateTrainingProgressStatus();
 
         Debug.Log(
-            "Mode Selection opened. Testing unlocked: " +
-            IsTestingUnlocked()
+            "Mode Selection opened for: " +
+            accountManager.CurrentUsername
+        );
+
+        Debug.Log(
+            "Successful training sessions: " +
+            successfulTrainingSessions +
+            " / " +
+            requiredTrainingSessions
+        );
+
+        Debug.Log(
+            "Testing unlocked: " +
+            testingUnlocked
         );
     }
 
@@ -376,32 +587,73 @@ public class SafetyModeSelectionPanel : MonoBehaviour
     // TRAINING MODE
     // ==========================================
 
-  
-public void ChooseTraining()
-{
-    selectedMode = "Training Mode";
-
-    Debug.Log("Training Mode started.");
-
-    // Hide the mode-selection interface.
-    if (modeSelectionPanel != null)
-        modeSelectionPanel.SetActive(false);
-
-    // Hide the old PPE checklist.
-    if (ppeChecklist != null &&
-        ppeChecklist.ppeChecklistPanel != null)
+    public void ChooseTraining()
     {
-        ppeChecklist.ppeChecklistPanel.SetActive(false);
+        if (!Application.isPlaying)
+            return;
+
+        // Prevent duplicate activation from
+        // Unity UI and EZPZ interaction events.
+
+        if (!string.IsNullOrEmpty(selectedMode))
+            return;
+
+        FindManagers();
+
+        if (!HasLoggedInTrainee())
+        {
+            SetStatus(
+                "Please log in before starting training."
+            );
+
+            return;
+        }
+
+        PPETrainingController ppeController =
+            FindFirstObjectByType<
+                PPETrainingController
+            >();
+
+        if (ppeController == null)
+        {
+            SetStatus(
+                "PPE Training Controller is unavailable."
+            );
+
+            Debug.LogError(
+                "PPETrainingController could not be found."
+            );
+
+            return;
+        }
+
+        selectedMode = "Training Mode";
+
+        Debug.Log(
+            "Training Mode started for: " +
+            accountManager.CurrentUsername
+        );
+
+        // Hide the existing mode selection panel.
+
+        if (modeSelectionPanel != null)
+        {
+            modeSelectionPanel.SetActive(false);
+        }
+
+        // Hide the old PPE checklist.
+
+        if (ppeChecklist != null &&
+            ppeChecklist.ppeChecklistPanel != null)
+        {
+            ppeChecklist.ppeChecklistPanel
+                .SetActive(false);
+        }
+
+        // Preserve the existing PPE training flow.
+
+        ppeController.BeginTraining();
     }
-
-    
-    // NEW: Activate the PPE training start zone
-    FindFirstObjectByType<PPETrainingController>()?.BeginTraining();
-
-    // Do not open the PPE checklist.
-    // The player can now explore the PPE equipment.
-}
-
 
     // ==========================================
     // TESTING MODE - ACCESS RESTRICTION
@@ -409,7 +661,21 @@ public void ChooseTraining()
 
     public void ChooseTesting()
     {
+        if (!Application.isPlaying)
+            return;
+
         FindManagers();
+
+        if (!HasLoggedInTrainee())
+        {
+            selectedMode = "";
+
+            SetStatus(
+                "Please log in before accessing Testing Mode."
+            );
+
+            return;
+        }
 
         if (progressManager == null)
         {
@@ -426,36 +692,76 @@ public void ChooseTraining()
             return;
         }
 
-        // Check the logged-in trainee's saved progress.
-        progressManager.LoadCurrentTraineeProgress();
+        // Reload the current trainee's saved progress.
 
-        if (!progressManager.CanAccessTesting)
+        RefreshTrainingProgress();
+
+        // ==========================================
+        // KEEP TESTING LOCKED IF TRAINING IS INCOMPLETE
+        // ==========================================
+
+        if (!testingUnlocked)
         {
             selectedMode = "";
 
-            SetStatus(
-                "TESTING MODE LOCKED - Pass Training Mode first."
-            );
-
             UpdateModeButtonLabels();
 
+            string message =
+                "Training sessions: " +
+                successfulTrainingSessions +
+                " / " +
+                requiredTrainingSessions +
+                "\nComplete " +
+                remainingTrainingSessions +
+                " more " +
+                (
+                    remainingTrainingSessions == 1
+                    ? "session"
+                    : "sessions"
+                ) +
+                " to unlock Testing.";
+
+            SetStatus(message);
+
             Debug.LogWarning(
-                "Testing Mode denied: training not passed."
+                "Testing Mode denied for: " +
+                accountManager.CurrentUsername
             );
 
-            // Do NOT open PPE Checklist.
+            Debug.Log(
+                "Remaining training sessions: " +
+                remainingTrainingSessions
+            );
+
             return;
         }
+
+        // Prevent duplicate button activation.
+
+        if (!string.IsNullOrEmpty(selectedMode))
+            return;
+
+        // ==========================================
+        // ALLOW TESTING MODE
+        // ==========================================
 
         selectedMode = "Testing Mode";
 
         SetStatus(
-            "Testing Mode unlocked."
+            "Training sessions: " +
+            successfulTrainingSessions +
+            " / " +
+            requiredTrainingSessions +
+            "\nTesting Mode unlocked."
         );
 
         Debug.Log(
-            "Selected mode: Testing Mode"
+            "Testing Mode authorised for: " +
+            accountManager.CurrentUsername
         );
+
+        // Preserve the existing PPE checklist
+        // connection for Testing Mode.
 
         OpenPPEChecklist();
     }
@@ -468,8 +774,34 @@ public void ChooseTraining()
     {
         FindManagers();
 
+        if (!HasLoggedInTrainee())
+        {
+            selectedMode = "";
+
+            SetStatus(
+                "A valid trainee login is required."
+            );
+
+            return;
+        }
+
+        // Additional access restriction.
+
+        if (selectedMode == "Testing Mode" &&
+            !IsTestingUnlocked())
+        {
+            selectedMode = "";
+
+            UpdateTrainingProgressStatus();
+            UpdateModeButtonLabels();
+
+            return;
+        }
+
         if (ppeChecklist == null)
         {
+            selectedMode = "";
+
             SetStatus(
                 "PPE Safety Checklist is not connected."
             );
@@ -495,26 +827,14 @@ public void ChooseTraining()
 
         if (ppeChecklist.ppeChecklistPanel == null)
         {
+            selectedMode = "";
+
             SetStatus(
                 "PPE Checklist Panel has not been built."
             );
 
             Debug.LogWarning(
                 "Build PPE Checklist Panel first."
-            );
-
-            return;
-        }
-
-        // Additional guard against bypassing
-        // testing access through this method.
-        if (selectedMode == "Testing Mode" &&
-            !IsTestingUnlocked())
-        {
-            selectedMode = "";
-
-            SetStatus(
-                "TESTING MODE LOCKED - Pass Training Mode first."
             );
 
             return;
@@ -549,7 +869,19 @@ public void ChooseTraining()
             label.GetComponent<TextMeshProUGUI>();
 
         if (text != null)
+        {
             text.text = message;
+
+            // Fit the two-line session progress
+            // inside the existing ModeStatus area.
+
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 14;
+            text.fontSizeMax = 22;
+
+            text.alignment =
+                TextAlignmentOptions.Center;
+        }
     }
 
     // ==========================================
@@ -572,7 +904,9 @@ public void ChooseTraining()
             typeof(TextMeshProUGUI)
         );
 
-        obj.transform.SetParent(parent, false);
+        obj.transform.SetParent(
+            parent, false
+        );
 
         int uiLayer =
             LayerMask.NameToLayer("UI");
@@ -631,7 +965,9 @@ public void ChooseTraining()
             typeof(Button)
         );
 
-        obj.transform.SetParent(parent, false);
+        obj.transform.SetParent(
+            parent, false
+        );
 
         int uiLayer =
             LayerMask.NameToLayer("UI");
@@ -674,6 +1010,7 @@ public void ChooseTraining()
             new Vector3(width, height, 10);
 
         // Preserve EZPZ Interaction Toolkit.
+
         obj.AddComponent<InteractableGeneral>();
 
         CreateText(

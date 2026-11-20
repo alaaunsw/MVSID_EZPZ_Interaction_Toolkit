@@ -1,4 +1,5 @@
 
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,10 @@ public class PPETrainingDualMenuBuilder : MonoBehaviour
     [Header("Feedback Sound")]
     public AudioSource successSound;
 
+    [Header("Safety Training Completion")]
+    public SafetyCompletionPanelBuilder safetyCompletionPanel;
+    public float completionDelay = 2f;
+
     [Header("Starting Behaviour")]
     public bool hideMenusAtStart = true;
 
@@ -39,6 +44,9 @@ public class PPETrainingDualMenuBuilder : MonoBehaviour
 
     private Image progressFill;
     private Image[] selectionHighlights;
+
+    private bool completionTriggered;
+    private Coroutine completionRoutine;
 
     private readonly HashSet<int> completed =
         new HashSet<int>();
@@ -62,20 +70,35 @@ public class PPETrainingDualMenuBuilder : MonoBehaviour
     {
         equipment = new PPEItem[]
         {
-            MakeItem("SAFETY HELMET",
-                "Helmets help protect against specified head impact and falling-object hazards."),
-            MakeItem("SAFETY GLASSES",
-                "Safety glasses help protect the eyes against specified particles and impact hazards."),
-            MakeItem("HIGH-VIS VEST",
-                "High-visibility clothing makes workers easier to see in appropriate conditions."),
-            MakeItem("SAFETY GLOVES",
-                "Task-appropriate gloves help protect hands against specified hazards."),
-            MakeItem("SAFETY BOOTS",
-                "Appropriate safety footwear helps protect feet against specified workplace hazards.")
+            MakeItem(
+                "SAFETY HELMET",
+                "Helmets help protect against specified head impact and falling-object hazards."
+            ),
+
+            MakeItem(
+                "SAFETY GLASSES",
+                "Safety glasses help protect the eyes against specified particles and impact hazards."
+            ),
+
+            MakeItem(
+                "HIGH-VIS VEST",
+                "High-visibility clothing makes workers easier to see in appropriate conditions."
+            ),
+
+            MakeItem(
+                "SAFETY GLOVES",
+                "Task-appropriate gloves help protect hands against specified hazards."
+            ),
+
+            MakeItem(
+                "SAFETY BOOTS",
+                "Appropriate safety footwear helps protect feet against specified workplace hazards."
+            )
         };
     }
 
-    private PPEItem MakeItem(string name, string message)
+    private PPEItem MakeItem(
+        string name, string message)
     {
         return new PPEItem
         {
@@ -89,8 +112,13 @@ public class PPETrainingDualMenuBuilder : MonoBehaviour
         FindPanels();
         ConnectButtons();
 
+        completionTriggered = false;
+
         if (hideMenusAtStart)
             HideMenus();
+
+        if (safetyCompletionPanel != null)
+            safetyCompletionPanel.HideCompletion();
 
         UpdateProgress();
     }
@@ -106,7 +134,9 @@ public class PPETrainingDualMenuBuilder : MonoBehaviour
             selectionCanvas == null)
         {
             Debug.LogError(
-                "Assign both Canvas references first.");
+                "Assign both Canvas references first."
+            );
+
             return;
         }
 
@@ -123,10 +153,16 @@ public class PPETrainingDualMenuBuilder : MonoBehaviour
         Debug.Log("Both PPE menus created.");
     }
 
+    // ==========================================
+    // INFORMATION PANEL
+    // ==========================================
+
     private void BuildInformationPanel()
     {
-        RemoveOld(informationCanvas.transform,
-            "TrainingInfoPanel");
+        RemoveOld(
+            informationCanvas.transform,
+            "TrainingInfoPanel"
+        );
 
         infoPanel = CreateBox(
             "TrainingInfoPanel",
@@ -197,15 +233,26 @@ public class PPETrainingDualMenuBuilder : MonoBehaviour
 
         RectTransform fillRect =
             fill.GetComponent<RectTransform>();
-fillRect.anchorMin = new Vector2(0.5f, 0.5f);
-fillRect.anchorMax = new Vector2(0.5f, 0.5f);
-        fillRect.pivot = new Vector2(0, 0.5f);
-        fillRect.anchoredPosition = new Vector2(-205, -245);
+
+        fillRect.anchorMin =
+            new Vector2(0.5f, 0.5f);
+
+        fillRect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        fillRect.pivot =
+            new Vector2(0, 0.5f);
+
+        fillRect.anchoredPosition =
+            new Vector2(-205, -245);
 
         progressFill = fill.GetComponent<Image>();
+
         progressFill.fillAmount = 0;
         progressFill.type = Image.Type.Filled;
-        progressFill.fillMethod = Image.FillMethod.Horizontal;
+
+        progressFill.fillMethod =
+            Image.FillMethod.Horizontal;
 
         progressText = CreateText(
             "ProgressText", infoPanel.transform,
@@ -215,10 +262,16 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         );
     }
 
+    // ==========================================
+    // SELECTION PANEL
+    // ==========================================
+
     private void BuildSelectionPanel()
     {
-        RemoveOld(selectionCanvas.transform,
-            "PPESelectionBar");
+        RemoveOld(
+            selectionCanvas.transform,
+            "PPESelectionBar"
+        );
 
         selectionPanel = CreateBox(
             "PPESelectionBar",
@@ -234,22 +287,24 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
             Color.white
         );
 
-        selectionHighlights = new Image[equipment.Length];
+        selectionHighlights =
+            new Image[equipment.Length];
 
         int count = equipment.Length;
 
         if (count == 0)
             return;
 
-        // Fit all equipment tiles inside the selection bar.
         float spacing = 12;
+
         float tileWidth =
             (920f - spacing * (count - 1)) / count;
 
         tileWidth = Mathf.Min(tileWidth, 165);
 
         float totalWidth =
-            tileWidth * count + spacing * (count - 1);
+            tileWidth * count +
+            spacing * (count - 1);
 
         float firstX =
             -totalWidth / 2f + tileWidth / 2f;
@@ -266,7 +321,10 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
     }
 
     private void CreateEquipmentButton(
-        int index, float x, float y, float width)
+        int index,
+        float x,
+        float y,
+        float width)
     {
         PPEItem item = equipment[index];
 
@@ -279,16 +337,22 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         selectionHighlights[index] =
             obj.GetComponent<Image>();
 
-        Button button = obj.AddComponent<Button>();
-        button.targetGraphic = obj.GetComponent<Image>();
+        Button button =
+            obj.AddComponent<Button>();
 
-        // Unity UI desktop interaction
+        button.targetGraphic =
+            obj.GetComponent<Image>();
+
+        // Unity UI desktop interaction.
+
         int capturedIndex = index;
+
         button.onClick.AddListener(
             () => SelectEquipment(capturedIndex)
         );
 
-        // EZPZ interaction
+        // Existing EZPZ interaction.
+
         BoxCollider collider =
             obj.AddComponent<BoxCollider>();
 
@@ -297,13 +361,18 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
 
         obj.AddComponent<InteractableGeneral>();
 
-        // Icon
+        // Equipment icon.
+
         GameObject iconObj = CreateBox(
-            "EquipmentIcon", obj.transform,
-            90, 85, 0, 20, Color.clear
+            "EquipmentIcon",
+            obj.transform,
+            90, 85, 0, 20,
+            Color.clear
         );
 
-        Image iconImage = iconObj.GetComponent<Image>();
+        Image iconImage =
+            iconObj.GetComponent<Image>();
+
         iconImage.preserveAspect = true;
         iconImage.raycastTarget = false;
 
@@ -314,7 +383,6 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         }
         else
         {
-            // Placeholder until a Sprite is assigned.
             iconImage.enabled = false;
 
             CreateText(
@@ -327,7 +395,8 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         }
 
         CreateText(
-            "EquipmentLabel", obj.transform,
+            "EquipmentLabel",
+            obj.transform,
             item.equipmentName,
             16, width - 8, 38, 0, -54,
             Color.white
@@ -340,7 +409,14 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
 
     public void SelectEquipment(int index)
     {
-        if (index < 0 || index >= equipment.Length)
+        // Prevent further equipment selections
+        // after the activity is completed.
+
+        if (completionTriggered)
+            return;
+
+        if (index < 0 ||
+            index >= equipment.Length)
             return;
 
         PPEItem item = equipment[index];
@@ -349,9 +425,13 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         {
             Debug.LogWarning(
                 item.equipmentName +
-                " has no mannequin model assigned.");
+                " has no mannequin model assigned."
+            );
+
             return;
         }
+
+        // Equip the mannequin.
 
         item.mannequinModel.SetActive(true);
 
@@ -361,38 +441,150 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
             successSound.Play();
 
         if (stepText != null)
+        {
             stepText.text =
-    "CORRECT! " + item.equipmentName + " SELECTED";
+                "CORRECT! " +
+                item.equipmentName +
+                " SELECTED";
+        }
 
         if (explanationText != null)
-            explanationText.text = item.explanation;
+        {
+            explanationText.text =
+                item.explanation;
+        }
 
         if (selectionHighlights != null)
         {
             for (int i = 0;
-                 i < selectionHighlights.Length; i++)
+                i < selectionHighlights.Length;
+                i++)
             {
                 if (selectionHighlights[i] != null)
+                {
                     selectionHighlights[i].color =
                         completed.Contains(i)
                         ? selected
                         : tile;
+                }
             }
         }
 
         UpdateProgress();
 
         Debug.Log(
-            "PPE selected: " + item.equipmentName
+            "PPE selected: " +
+            item.equipmentName
+        );
+
+        // NEW: Check whether all equipment
+        // has been selected.
+
+        CheckTrainingCompletion();
+    }
+
+    // ==========================================
+    // EXISTING EZPZ PUBLIC METHODS
+    // ==========================================
+
+    public void SelectHelmet()
+        => SelectEquipment(0);
+
+    public void SelectGlasses()
+        => SelectEquipment(1);
+
+    public void SelectVest()
+        => SelectEquipment(2);
+
+    public void SelectGloves()
+        => SelectEquipment(3);
+
+    public void SelectBoots()
+        => SelectEquipment(4);
+
+    // ==========================================
+    // CHECK SAFETY TRAINING COMPLETION
+    // ==========================================
+
+    private void CheckTrainingCompletion()
+    {
+        if (completionTriggered)
+            return;
+
+        if (equipment.Length == 0)
+            return;
+
+        if (completed.Count < equipment.Length)
+            return;
+
+        if (safetyCompletionPanel == null ||
+            safetyCompletionPanel.completionCanvas == null)
+        {
+            Debug.LogError(
+                "Assign and build the Safety Completion Panel."
+            );
+
+            return;
+        }
+
+        completionTriggered = true;
+
+        Debug.Log(
+            "All required PPE equipped on mannequin."
+        );
+
+        if (completionRoutine != null)
+            StopCoroutine(completionRoutine);
+
+        completionRoutine = StartCoroutine(
+            CompleteSafetyTraining()
         );
     }
 
-    // Public methods for EZPZ event connections.
-    public void SelectHelmet() => SelectEquipment(0);
-    public void SelectGlasses() => SelectEquipment(1);
-    public void SelectVest() => SelectEquipment(2);
-    public void SelectGloves() => SelectEquipment(3);
-    public void SelectBoots() => SelectEquipment(4);
+    // ==========================================
+    // AUTOMATIC COMPLETION SEQUENCE
+    // ==========================================
+
+    private IEnumerator CompleteSafetyTraining()
+    {
+        if (stepText != null)
+        {
+            stepText.text =
+                "PPE TRAINING COMPLETED!";
+        }
+
+        if (explanationText != null)
+        {
+            explanationText.text =
+                "All required safety equipment " +
+                "has been successfully selected.";
+        }
+
+        // Give the trainee time to see
+        // the completed progress and feedback.
+
+        yield return new WaitForSeconds(
+            Mathf.Max(0f, completionDelay)
+        );
+
+        // Hide the previous PPE menus.
+
+        HideMenus();
+
+        // Show the new completion panel.
+
+        if (safetyCompletionPanel != null)
+        {
+            safetyCompletionPanel.ShowCompletion();
+        }
+
+        completionRoutine = null;
+
+        Debug.Log(
+            "Safety training completed. " +
+            "Inspection facility is now available."
+        );
+    }
 
     // ==========================================
     // PROGRESS
@@ -404,13 +596,24 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         int done = completed.Count;
 
         if (progressText != null)
+        {
             progressText.text =
-                done + " / " + total + " COMPLETED";
+                done + " / " +
+                total + " COMPLETED";
+        }
 
         if (progressFill != null)
+        {
             progressFill.fillAmount =
-                total > 0 ? (float)done / total : 0;
+                total > 0
+                ? (float)done / total
+                : 0;
+        }
     }
+
+    // ==========================================
+    // SHOW MENUS
+    // ==========================================
 
     public void ShowMenus()
     {
@@ -423,6 +626,10 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
             selectionPanel.SetActive(true);
     }
 
+    // ==========================================
+    // HIDE MENUS
+    // ==========================================
+
     public void HideMenus()
     {
         FindPanels();
@@ -434,53 +641,89 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
             selectionPanel.SetActive(false);
     }
 
+    // ==========================================
+    // RESET PPE TRAINING
+    // ==========================================
+
     public void ResetTraining()
     {
+        if (completionRoutine != null)
+        {
+            StopCoroutine(completionRoutine);
+            completionRoutine = null;
+        }
+
+        completionTriggered = false;
+
+        if (safetyCompletionPanel != null)
+        {
+            safetyCompletionPanel.HideCompletion();
+        }
+
         completed.Clear();
 
         foreach (PPEItem item in equipment)
         {
             if (item.mannequinModel != null)
+            {
                 item.mannequinModel.SetActive(false);
+            }
         }
 
         if (selectionHighlights != null)
         {
             foreach (Image image in selectionHighlights)
+            {
                 if (image != null)
                     image.color = tile;
+            }
         }
 
         if (stepText != null)
-            stepText.text = "Select PPE to begin.";
+        {
+            stepText.text =
+                "Select PPE to begin.";
+        }
 
         if (explanationText != null)
+        {
             explanationText.text =
                 "Choose equipment from the selection bar.";
+        }
 
         UpdateProgress();
     }
 
     // ==========================================
-    // HELPERS
+    // FIND EXISTING PANELS
     // ==========================================
 
     private void FindPanels()
     {
         if (informationCanvas != null)
         {
-            Transform t = informationCanvas.transform.Find(
-                "TrainingInfoPanel");
+            Transform t =
+                informationCanvas.transform.Find(
+                    "TrainingInfoPanel"
+                );
 
-            infoPanel = t != null ? t.gameObject : null;
+            infoPanel =
+                t != null ? t.gameObject : null;
 
             if (t != null)
             {
-                stepText = FindText(t, "CurrentStep");
-                explanationText = FindText(t, "Explanation");
-                progressText = FindText(t, "ProgressText");
+                stepText =
+                    FindText(t, "CurrentStep");
 
-                Transform fill = t.Find("ProgressFill");
+                explanationText =
+                    FindText(t, "Explanation");
+
+                progressText =
+                    FindText(t, "ProgressText");
+
+                Transform fill =
+                    t.Find("ProgressFill");
+
                 progressFill = fill != null
                     ? fill.GetComponent<Image>()
                     : null;
@@ -489,10 +732,13 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
 
         if (selectionCanvas != null)
         {
-            Transform t = selectionCanvas.transform.Find(
-                "PPESelectionBar");
+            Transform t =
+                selectionCanvas.transform.Find(
+                    "PPESelectionBar"
+                );
 
-            selectionPanel = t != null ? t.gameObject : null;
+            selectionPanel =
+                t != null ? t.gameObject : null;
         }
     }
 
@@ -500,24 +746,34 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         Transform parent, string name)
     {
         Transform t = parent.Find(name);
+
         return t != null
             ? t.GetComponent<TextMeshProUGUI>()
             : null;
     }
+
+    // ==========================================
+    // CONNECT EXISTING BUTTONS
+    // ==========================================
 
     private void ConnectButtons()
     {
         if (selectionPanel == null)
             return;
 
-        selectionHighlights = new Image[equipment.Length];
+        selectionHighlights =
+            new Image[equipment.Length];
 
-        for (int i = 0; i < equipment.Length; i++)
+        for (int i = 0;
+             i < equipment.Length;
+             i++)
         {
             int capturedIndex = i;
 
-            Transform t = selectionPanel.transform.Find(
-                "PPEButton_" + i);
+            Transform t =
+                selectionPanel.transform.Find(
+                    "PPEButton_" + i
+                );
 
             if (t == null)
                 continue;
@@ -525,11 +781,13 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
             selectionHighlights[i] =
                 t.GetComponent<Image>();
 
-            Button button = t.GetComponent<Button>();
+            Button button =
+                t.GetComponent<Button>();
 
             if (button != null)
             {
                 button.onClick.RemoveAllListeners();
+
                 button.onClick.AddListener(
                     () => SelectEquipment(capturedIndex)
                 );
@@ -537,8 +795,13 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         }
     }
 
+    // ==========================================
+    // REMOVE OLD UI
+    // ==========================================
+
     private void RemoveOld(
-        Transform parent, string objectName)
+        Transform parent,
+        string objectName)
     {
         Transform old = parent.Find(objectName);
 
@@ -550,6 +813,10 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         else
             DestroyImmediate(old.gameObject);
     }
+
+    // ==========================================
+    // CREATE UI BOX
+    // ==========================================
 
     private GameObject CreateBox(
         string name,
@@ -567,24 +834,42 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         );
 
         obj.transform.SetParent(parent, false);
-        obj.layer = LayerMask.NameToLayer("UI");
+
+        obj.layer =
+            LayerMask.NameToLayer("UI");
 
         RectTransform rect =
             obj.GetComponent<RectTransform>();
 
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.sizeDelta = new Vector2(width, height);
-        rect.anchoredPosition = new Vector2(x, y);
+        rect.anchorMin =
+            new Vector2(0.5f, 0.5f);
+
+        rect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        rect.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        rect.sizeDelta =
+            new Vector2(width, height);
+
+        rect.anchoredPosition =
+            new Vector2(x, y);
+
         rect.localScale = Vector3.one;
         rect.localRotation = Quaternion.identity;
 
-        Image image = obj.GetComponent<Image>();
+        Image image =
+            obj.GetComponent<Image>();
+
         image.color = colour;
 
         return obj;
     }
+
+    // ==========================================
+    // CREATE UI TEXT
+    // ==========================================
 
     private TextMeshProUGUI CreateText(
         string name,
@@ -608,12 +893,21 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         RectTransform rect =
             obj.GetComponent<RectTransform>();
 
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchorMin =
+            new Vector2(0.5f, 0.5f);
 
-        rect.sizeDelta = new Vector2(width, height);
-        rect.anchoredPosition = new Vector2(x, y);
+        rect.anchorMax =
+            new Vector2(0.5f, 0.5f);
+
+        rect.pivot =
+            new Vector2(0.5f, 0.5f);
+
+        rect.sizeDelta =
+            new Vector2(width, height);
+
+        rect.anchoredPosition =
+            new Vector2(x, y);
+
         rect.localScale = Vector3.one;
 
         TextMeshProUGUI txt =
@@ -622,7 +916,10 @@ fillRect.anchorMax = new Vector2(0.5f, 0.5f);
         txt.text = content;
         txt.fontSize = size;
         txt.color = colour;
-        txt.alignment = TextAlignmentOptions.Center;
+
+        txt.alignment =
+            TextAlignmentOptions.Center;
+
         txt.enableWordWrapping = true;
         txt.raycastTarget = false;
 

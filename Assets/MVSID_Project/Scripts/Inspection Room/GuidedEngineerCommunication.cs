@@ -18,6 +18,10 @@ public class GuidedEngineerCommunication : MonoBehaviour
     public GameObject communicationPanel;
     public bool openAfterReportSubmission = true;
 
+    // NEW: Training progress checklist.
+    [Header("Training Progress Checklist")]
+    public InspectionTaskChecklist taskChecklist;
+
     [Header("EZPZ Interaction")]
     public MaterialLossCalculatorKey calculatorKeyTemplate;
     public bool copyEZPZInteractions = true;
@@ -40,7 +44,11 @@ public class GuidedEngineerCommunication : MonoBehaviour
     private bool started;
     private bool completed;
 
-    private readonly bool[] completedTasks = new bool[3];
+    // NEW: Prevent duplicate checklist completion.
+    private bool engineeringTaskCompleted;
+
+    private readonly bool[] completedTasks =
+        new bool[3];
 
     private readonly Color navy =
         new Color32(26, 73, 135, 255);
@@ -66,7 +74,10 @@ public class GuidedEngineerCommunication : MonoBehaviour
     private readonly Color red =
         new Color32(175, 65, 45, 255);
 
-    // Stages:
+    // ==========================================
+    // COMMUNICATION STAGES
+    // ==========================================
+
     // 0 = Waiting for engineer
     // 1 = Read engineer's response
     // 2 = Understand instructions
@@ -117,36 +128,45 @@ public class GuidedEngineerCommunication : MonoBehaviour
         {
             "", "", ""
         },
+
         {
             "", "", ""
         },
+
         {
             "Repair the damaged pipe immediately",
             "Document the finding and await engineering assessment",
             "Ignore the defect because it is Moderate"
         },
+
         {
             "PIPE_0493 — affected pipe support",
             "The control room",
             "A different pipe with no observed defect"
         },
+
         {
             "Delete the inspection evidence",
             "Modify the measurements to remove the defect",
             "Retain the inspection record and supporting evidence"
         },
+
         {
             "Closed — no further action required",
             "Pending Engineering Assessment",
             "Repair Completed"
         },
+
         {
             "Understood. I recorded the affected location, " +
             "retained the evidence, and marked the finding " +
             "pending engineering assessment.",
+
             "I repaired the pipe without authorisation.",
+
             "I will ignore the finding until the next inspection."
         },
+
         {
             "", "", ""
         }
@@ -160,25 +180,39 @@ public class GuidedEngineerCommunication : MonoBehaviour
     private readonly string[] successMessages =
     {
         "",
+
         "",
+
         "Correct. Follow the engineer's documented instructions.",
+
         "Correct. The affected location has been recorded.",
+
         "Correct. The inspection evidence has been retained.",
+
         "Correct. The finding is pending engineering assessment.",
+
         "Correct. Your acknowledgement is appropriate.",
+
         ""
     };
 
     private readonly string[] retryMessages =
     {
         "",
+
         "",
+
         "The engineer has not authorised a repair " +
         "or an operational change.",
+
         "Review the pipe ID and location in your report.",
+
         "Evidence must be retained for engineering review.",
+
         "The finding has not yet been resolved or repaired.",
+
         "Acknowledge only actions actually completed.",
+
         ""
     };
 
@@ -191,6 +225,8 @@ public class GuidedEngineerCommunication : MonoBehaviour
         FindReferences();
         FindUI();
         ConnectButtons();
+
+        engineeringTaskCompleted = false;
 
         if (communicationPanel != null)
             communicationPanel.SetActive(false);
@@ -246,6 +282,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
             Debug.LogWarning(
                 "Stop Play Mode before building."
             );
+
             return;
         }
 
@@ -260,6 +297,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 "Attach this script to the existing " +
                 "World Space training Canvas."
             );
+
             return;
         }
 
@@ -275,7 +313,10 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 typeof(Image)
             );
 
-            obj.transform.SetParent(transform, false);
+            obj.transform.SetParent(
+                transform, false
+            );
+
             communicationPanel = obj;
         }
         else
@@ -284,13 +325,16 @@ public class GuidedEngineerCommunication : MonoBehaviour
         }
 
 #if UNITY_EDITOR
+
         Undo.RegisterFullObjectHierarchyUndo(
             communicationPanel,
             "Build Engineer Communication Panel"
         );
+
 #endif
 
-        Transform root = communicationPanel.transform;
+        Transform root =
+            communicationPanel.transform;
 
         SetRect(root, 0, 0, 820, 760);
 
@@ -298,8 +342,10 @@ public class GuidedEngineerCommunication : MonoBehaviour
             communicationPanel.GetComponent<Image>();
 
         if (background == null)
+        {
             background =
                 communicationPanel.AddComponent<Image>();
+        }
 
         background.color = Color.white;
         background.raycastTarget = true;
@@ -433,20 +479,26 @@ public class GuidedEngineerCommunication : MonoBehaviour
         FindUI();
         ShowStage(0);
 
-        communicationPanel.transform.SetAsLastSibling();
+        communicationPanel.transform
+            .SetAsLastSibling();
 
 #if UNITY_EDITOR
+
         if (copyEZPZInteractions)
             ConfigureEZPZInteractions();
+
 #endif
 
         communicationPanel.SetActive(false);
 
 #if UNITY_EDITOR
+
         EditorUtility.SetDirty(this);
+
         EditorSceneManager.MarkSceneDirty(
             gameObject.scene
         );
+
 #endif
 
         Debug.Log(
@@ -477,13 +529,19 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 typeof(Image)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             child = obj.transform;
         }
 
-        SetRect(child, x, y, width, height);
+        SetRect(
+            child, x, y, width, height
+        );
 
-        Image image = child.GetComponent<Image>();
+        Image image =
+            child.GetComponent<Image>();
 
         if (image != null)
         {
@@ -517,13 +575,19 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 typeof(TextMeshProUGUI)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             child = obj.transform;
         }
 
-        SetRect(child, x, y, width, height);
+        SetRect(
+            child, x, y, width, height
+        );
 
-        TMP_Text text = child.GetComponent<TMP_Text>();
+        TMP_Text text =
+            child.GetComponent<TMP_Text>();
 
         text.text = content;
         text.fontSize = size;
@@ -563,36 +627,55 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 typeof(BoxCollider)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             child = obj.transform;
         }
 
-        SetRect(child, x, y, width, height);
+        SetRect(
+            child, x, y, width, height
+        );
 
-        Image image = child.GetComponent<Image>();
+        Image image =
+            child.GetComponent<Image>();
 
         if (image == null)
-            image = child.gameObject.AddComponent<Image>();
+        {
+            image =
+                child.gameObject.AddComponent<Image>();
+        }
 
         image.color = background;
         image.raycastTarget = true;
 
-        Button button = child.GetComponent<Button>();
+        Button button =
+            child.GetComponent<Button>();
 
         if (button == null)
-            button = child.gameObject.AddComponent<Button>();
+        {
+            button =
+                child.gameObject.AddComponent<Button>();
+        }
 
         button.targetGraphic = image;
         button.interactable = true;
-        button.transition = Selectable.Transition.None;
+
+        button.transition =
+            Selectable.Transition.None;
 
         BoxCollider collider =
             child.GetComponent<BoxCollider>();
 
         if (collider == null)
-            collider = child.gameObject.AddComponent<BoxCollider>();
+        {
+            collider =
+                child.gameObject.AddComponent<BoxCollider>();
+        }
 
         collider.center = Vector3.zero;
+
         collider.size = new Vector3(
             width, height, 4f
         );
@@ -602,7 +685,9 @@ public class GuidedEngineerCommunication : MonoBehaviour
             "ButtonText",
             caption,
             19, foreground, FontStyles.Bold,
-            0, 0, width - 24, height - 8,
+            0, 0,
+            width - 24,
+            height - 8,
             TextAlignmentOptions.Center
         );
 
@@ -640,7 +725,8 @@ public class GuidedEngineerCommunication : MonoBehaviour
         float width,
         float height)
     {
-        RectTransform rect = target as RectTransform;
+        RectTransform rect =
+            target as RectTransform;
 
         if (rect == null)
             return;
@@ -661,7 +747,9 @@ public class GuidedEngineerCommunication : MonoBehaviour
             new Vector2(width, height);
 
         rect.localScale = Vector3.one;
-        rect.localRotation = Quaternion.identity;
+
+        rect.localRotation =
+            Quaternion.identity;
     }
 
     // ==========================================
@@ -673,24 +761,33 @@ public class GuidedEngineerCommunication : MonoBehaviour
         if (communicationPanel == null)
             return;
 
-        Transform root = communicationPanel.transform;
+        Transform root =
+            communicationPanel.transform;
 
-        stageLabel = FindText(root, "StageLabel");
-        heading = FindText(root, "LearningHeading");
-        description = FindText(root, "InstructionText");
+        stageLabel =
+            FindText(root, "StageLabel");
+
+        heading =
+            FindText(root, "LearningHeading");
+
+        description =
+            FindText(root, "InstructionText");
 
         Transform message =
             root.Find("EngineerMessageBackground");
 
-        messageBox = message != null
-            ? message.gameObject : null;
+        messageBox =
+            message != null
+            ? message.gameObject
+            : null;
 
         messageText = FindText(
             message,
             "EngineerMessageText"
         );
 
-        feedbackText = FindText(root, "FeedbackText");
+        feedbackText =
+            FindText(root, "FeedbackText");
 
         for (int i = 0; i < 3; i++)
         {
@@ -698,21 +795,32 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 "ChoiceButton_" + i
             );
 
-            choices[i] = found != null
-                ? found.GetComponent<Button>() : null;
+            choices[i] =
+                found != null
+                ? found.GetComponent<Button>()
+                : null;
 
-            choiceLabels[i] = found != null
-                ? found.GetComponentInChildren<TMP_Text>(true)
+            choiceLabels[i] =
+                found != null
+                ? found.GetComponentInChildren<
+                    TMP_Text
+                >(true)
                 : null;
         }
 
-        Transform primary = root.Find("PrimaryButton");
+        Transform primary =
+            root.Find("PrimaryButton");
 
-        primaryButton = primary != null
-            ? primary.GetComponent<Button>() : null;
+        primaryButton =
+            primary != null
+            ? primary.GetComponent<Button>()
+            : null;
 
-        primaryButtonText = primary != null
-            ? primary.GetComponentInChildren<TMP_Text>(true)
+        primaryButtonText =
+            primary != null
+            ? primary.GetComponentInChildren<
+                TMP_Text
+            >(true)
             : null;
     }
 
@@ -723,7 +831,8 @@ public class GuidedEngineerCommunication : MonoBehaviour
         if (parent == null)
             return null;
 
-        Transform found = parent.Find(name);
+        Transform found =
+            parent.Find(name);
 
         return found != null
             ? found.GetComponent<TMP_Text>()
@@ -748,13 +857,19 @@ public class GuidedEngineerCommunication : MonoBehaviour
         {
             key.training = this;
 
-            Button button = key.GetComponent<Button>();
+            Button button =
+                key.GetComponent<Button>();
 
             if (button == null)
                 continue;
 
-            button.onClick.RemoveListener(key.Activate);
-            button.onClick.AddListener(key.Activate);
+            button.onClick.RemoveListener(
+                key.Activate
+            );
+
+            button.onClick.AddListener(
+                key.Activate
+            );
         }
     }
 
@@ -794,6 +909,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
             Debug.LogWarning(
                 "Open communication in Play Mode."
             );
+
             return;
         }
 
@@ -806,23 +922,34 @@ public class GuidedEngineerCommunication : MonoBehaviour
             Debug.LogError(
                 "Build Engineer Communication Panel first."
             );
+
             return;
         }
 
         started = true;
         completed = false;
 
-        for (int i = 0; i < completedTasks.Length; i++)
+        // NEW: Reset checklist completion guard.
+        engineeringTaskCompleted = false;
+
+        for (int i = 0;
+             i < completedTasks.Length;
+             i++)
+        {
             completedTasks[i] = false;
+        }
 
         if (reporting != null &&
             reporting.multipleChoicePanel != null)
         {
-            reporting.multipleChoicePanel.SetActive(false);
+            reporting.multipleChoicePanel
+                .SetActive(false);
         }
 
         communicationPanel.SetActive(true);
-        communicationPanel.transform.SetAsLastSibling();
+
+        communicationPanel.transform
+            .SetAsLastSibling();
 
         ShowStage(0);
     }
@@ -833,7 +960,10 @@ public class GuidedEngineerCommunication : MonoBehaviour
 
     private void ShowStage(int nextStage)
     {
-        stage = Mathf.Clamp(nextStage, 0, 7);
+        stage = Mathf.Clamp(
+            nextStage, 0, 7
+        );
+
         selected = -1;
         answerVerified = false;
 
@@ -846,8 +976,10 @@ public class GuidedEngineerCommunication : MonoBehaviour
         if (description != null)
             description.text = instructions[stage];
 
-        // Engineer message or status
-        string message = GetStageMessage();
+        // Engineer message or status.
+
+        string message =
+            GetStageMessage();
 
         if (messageBox != null)
             messageBox.SetActive(true);
@@ -855,7 +987,8 @@ public class GuidedEngineerCommunication : MonoBehaviour
         if (messageText != null)
             messageText.text = message;
 
-        bool requiresChoice = stage >= 2 && stage <= 6;
+        bool requiresChoice =
+            stage >= 2 && stage <= 6;
 
         for (int i = 0; i < 3; i++)
         {
@@ -869,14 +1002,17 @@ public class GuidedEngineerCommunication : MonoBehaviour
             if (!requiresChoice)
                 continue;
 
-            Image image = choices[i].GetComponent<Image>();
+            Image image =
+                choices[i].GetComponent<Image>();
 
             if (image != null)
                 image.color = paleBlue;
 
             if (choiceLabels[i] != null)
             {
-                choiceLabels[i].text = answers[stage, i];
+                choiceLabels[i].text =
+                    answers[stage, i];
+
                 choiceLabels[i].color = navy;
             }
         }
@@ -885,36 +1021,51 @@ public class GuidedEngineerCommunication : MonoBehaviour
         {
             feedbackText.color = dark;
 
-            feedbackText.text = requiresChoice
+            feedbackText.text =
+                requiresChoice
                 ? "Select an answer, then check it."
                 : "";
         }
 
         if (primaryButton != null)
-            primaryButton.gameObject.SetActive(stage != 7);
+        {
+            primaryButton.gameObject.SetActive(
+                stage != 7
+            );
+        }
 
         if (primaryButtonText != null)
         {
             switch (stage)
             {
                 case 0:
+
                     primaryButtonText.text =
                         "RECEIVE ENGINEER RESPONSE";
+
                     break;
 
                 case 1:
+
                     primaryButtonText.text =
                         "I HAVE READ THE INSTRUCTIONS";
+
                     break;
 
                 default:
+
                     primaryButtonText.text =
                         requiresChoice
                         ? "CHECK RESPONSE"
                         : "CONTINUE";
+
                     break;
             }
         }
+
+        // ==========================================
+        // FINAL ENGINEER COMMUNICATION STAGE
+        // ==========================================
 
         if (stage == 7)
         {
@@ -923,9 +1074,14 @@ public class GuidedEngineerCommunication : MonoBehaviour
             if (feedbackText != null)
             {
                 feedbackText.color = green;
+
                 feedbackText.text =
                     "All communication tasks completed.";
             }
+
+            // NEW: Complete the fifth checklist task.
+
+            CompleteEngineeringAssessmentTask();
 
             Debug.Log(
                 "Step 7: Engineer Communication completed."
@@ -933,11 +1089,90 @@ public class GuidedEngineerCommunication : MonoBehaviour
         }
     }
 
+    // ==========================================
+    // NEW: COMPLETE CHECKLIST TASK 5
+    // ==========================================
+
+    private void CompleteEngineeringAssessmentTask()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        if (engineeringTaskCompleted)
+            return;
+
+        if (!completed)
+            return;
+
+        // Require a submitted report.
+
+        if (reporting == null ||
+            !reporting.IsReportSubmitted())
+        {
+            Debug.LogWarning(
+                "Inspection report must be submitted first."
+            );
+
+            return;
+        }
+
+        // Ensure all three communication tasks
+        // have been successfully completed.
+
+        if (!completedTasks[0] ||
+            !completedTasks[1] ||
+            !completedTasks[2])
+        {
+            Debug.LogWarning(
+                "Complete all engineer communication tasks."
+            );
+
+            return;
+        }
+
+        // Find the checklist automatically
+        // if the Inspector reference is missing.
+
+        if (taskChecklist == null)
+        {
+            taskChecklist =
+                FindFirstObjectByType<
+                    InspectionTaskChecklist
+                >();
+        }
+
+        if (taskChecklist == null)
+        {
+            Debug.LogWarning(
+                "Inspection Task Checklist not assigned."
+            );
+
+            return;
+        }
+
+        // Complete Task 5:
+        // Wait for engineering assessment.
+
+        taskChecklist.CompleteTask4();
+
+        engineeringTaskCompleted = true;
+
+        Debug.Log(
+            "Training Checklist: " +
+            "Engineering communication completed."
+        );
+    }
+
+    // ==========================================
+    // ENGINEER MESSAGES
+    // ==========================================
+
     private string GetStageMessage()
     {
         switch (stage)
         {
             case 0:
+
                 return
                     "<b>REPORT STATUS</b>\n" +
                     "PIPE_0493: SUBMITTED\n" +
@@ -946,6 +1181,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
 
             case 1:
             case 2:
+
                 return
                     "<b>ENGINEER:</b>\n" +
                     "Report received for PIPE_0493. " +
@@ -956,30 +1192,35 @@ public class GuidedEngineerCommunication : MonoBehaviour
                     "without authorisation.";
 
             case 3:
+
                 return
                     "<b>TASK 1 — RECORD LOCATION</b>\n" +
                     "Identify the affected asset and support " +
                     "location from your inspection report.";
 
             case 4:
+
                 return
                     "<b>TASK 2 — PRESERVE EVIDENCE</b>\n" +
                     "Keep the inspection measurements and " +
                     "supporting observations available for review.";
 
             case 5:
+
                 return
                     "<b>TASK 3 — UPDATE STATUS</b>\n" +
                     "This finding has not yet received an " +
                     "engineering disposition.";
 
             case 6:
+
                 return
                     "<b>ENGINEER:</b>\n" +
                     "Please confirm that the requested " +
                     "documentation tasks are complete.";
 
             case 7:
+
                 return
                     "<b>TRAINING COMPLETE</b>\n" +
                     "PIPE_0493 location recorded.\n" +
@@ -988,6 +1229,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
                     "Acknowledgement sent to simulated engineer.";
 
             default:
+
                 return "";
         }
     }
@@ -1014,7 +1256,8 @@ public class GuidedEngineerCommunication : MonoBehaviour
             if (choices[i] == null)
                 continue;
 
-            Image image = choices[i].GetComponent<Image>();
+            Image image =
+                choices[i].GetComponent<Image>();
 
             if (image != null)
             {
@@ -1036,6 +1279,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
         if (feedbackText != null)
         {
             feedbackText.color = dark;
+
             feedbackText.text =
                 "Selection recorded. Press CHECK RESPONSE.";
         }
@@ -1053,17 +1297,26 @@ public class GuidedEngineerCommunication : MonoBehaviour
         if (stage == 0 || stage == 1)
         {
             ShowStage(stage + 1);
+
             return;
         }
 
         if (stage >= 2 && stage <= 6)
         {
             if (!answerVerified)
+            {
                 CheckResponse();
+            }
             else
+            {
                 ShowStage(stage + 1);
+            }
         }
     }
+
+    // ==========================================
+    // CHECK RESPONSE
+    // ==========================================
 
     private void CheckResponse()
     {
@@ -1073,6 +1326,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 "Please select an answer.",
                 red
             );
+
             return;
         }
 
@@ -1082,6 +1336,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 retryMessages[stage],
                 red
             );
+
             return;
         }
 
@@ -1162,12 +1417,15 @@ public class GuidedEngineerCommunication : MonoBehaviour
             return;
 
         communicationPanel.SetActive(true);
+
         ShowStage(0);
 
 #if UNITY_EDITOR
+
         EditorSceneManager.MarkSceneDirty(
             gameObject.scene
         );
+
 #endif
     }
 
@@ -1181,9 +1439,11 @@ public class GuidedEngineerCommunication : MonoBehaviour
             communicationPanel.SetActive(false);
 
 #if UNITY_EDITOR
+
         EditorSceneManager.MarkSceneDirty(
             gameObject.scene
         );
+
 #endif
     }
 
@@ -1208,18 +1468,22 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 "Assign a working calculator key " +
                 "and build the communication panel."
             );
+
             return;
         }
 
         Component donor = null;
 
         foreach (Component component in
-            calculatorKeyTemplate.GetComponents<Component>())
+            calculatorKeyTemplate
+                .GetComponents<Component>())
         {
             if (component != null &&
-                component.GetType().Name == "InteractableGeneral")
+                component.GetType().Name ==
+                    "InteractableGeneral")
             {
                 donor = component;
+
                 break;
             }
         }
@@ -1230,6 +1494,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 "The calculator key template has no " +
                 "InteractableGeneral component."
             );
+
             return;
         }
 
@@ -1250,16 +1515,19 @@ public class GuidedEngineerCommunication : MonoBehaviour
             {
                 if (component != null &&
                     component.GetType().Name ==
-                    "InteractableGeneral")
+                        "InteractableGeneral")
                 {
                     interaction = component;
+
                     break;
                 }
             }
 
             if (interaction == null)
             {
-                ComponentUtility.CopyComponent(donor);
+                ComponentUtility.CopyComponent(
+                    donor
+                );
 
                 bool pasted =
                     ComponentUtility.PasteComponentAsNew(
@@ -1269,6 +1537,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 if (!pasted)
                 {
                     unresolved++;
+
                     continue;
                 }
 
@@ -1277,9 +1546,10 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 {
                     if (component != null &&
                         component.GetType().Name ==
-                        "InteractableGeneral")
+                            "InteractableGeneral")
                     {
                         interaction = component;
+
                         break;
                     }
                 }
@@ -1288,6 +1558,7 @@ public class GuidedEngineerCommunication : MonoBehaviour
             if (interaction == null)
             {
                 unresolved++;
+
                 continue;
             }
 
@@ -1310,8 +1581,8 @@ public class GuidedEngineerCommunication : MonoBehaviour
                 }
 
                 for (int i = 0;
-                    i < iterator.arraySize;
-                    i++)
+                     i < iterator.arraySize;
+                     i++)
                 {
                     SerializedProperty call =
                         iterator.GetArrayElementAtIndex(i);
@@ -1326,14 +1597,21 @@ public class GuidedEngineerCommunication : MonoBehaviour
                             "m_MethodName"
                         );
 
-                    if (target == null || method == null)
+                    if (target == null ||
+                        method == null)
+                    {
                         continue;
+                    }
 
                     if (target.objectReferenceValue ==
                         calculatorKeyTemplate)
                     {
-                        target.objectReferenceValue = key;
-                        method.stringValue = "Activate";
+                        target.objectReferenceValue =
+                            key;
+
+                        method.stringValue =
+                            "Activate";
+
                         rewired = true;
                     }
                 }
@@ -1342,7 +1620,9 @@ public class GuidedEngineerCommunication : MonoBehaviour
             if (rewired)
             {
                 serialized.ApplyModifiedProperties();
+
                 EditorUtility.SetDirty(interaction);
+
                 connected++;
             }
             else
@@ -1371,4 +1651,5 @@ public class GuidedEngineerCommunication : MonoBehaviour
     }
 
 #endif
+
 }

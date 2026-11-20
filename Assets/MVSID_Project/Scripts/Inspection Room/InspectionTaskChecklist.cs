@@ -54,6 +54,10 @@ public class InspectionTaskChecklist : MonoBehaviour
     private readonly Color done =
         new Color32(231, 248, 235, 255);
 
+    // =========================================
+    // UNITY
+    // =========================================
+
     private void Start()
     {
         if (hudCanvas == null && buildOnStart)
@@ -68,14 +72,21 @@ public class InspectionTaskChecklist : MonoBehaviour
             HideHUD();
     }
 
+    // =========================================
+    // BUILD CHECKLIST HUD
+    // =========================================
+
     [ContextMenu("Build Training Progress HUD")]
     public void BuildChecklistHUD()
     {
-        if (transform.Find("InspectionTaskChecklistCanvas") != null)
+        if (transform.Find(
+            "InspectionTaskChecklistCanvas"
+        ) != null)
         {
             Debug.LogWarning(
                 "Delete the old checklist Canvas before rebuilding."
             );
+
             return;
         }
 
@@ -86,13 +97,21 @@ public class InspectionTaskChecklist : MonoBehaviour
             typeof(CanvasScaler)
         );
 
-        root.transform.SetParent(transform, false);
+        root.transform.SetParent(
+            transform, false
+        );
 
-        hudCanvas = root.GetComponent<Canvas>();
-        hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        hudCanvas =
+            root.GetComponent<Canvas>();
+
+        hudCanvas.renderMode =
+            RenderMode.ScreenSpaceOverlay;
+
         hudCanvas.sortingOrder = 200;
 
-        CanvasScaler scaler = root.GetComponent<CanvasScaler>();
+        CanvasScaler scaler =
+            root.GetComponent<CanvasScaler>();
+
         scaler.uiScaleMode =
             CanvasScaler.ScaleMode.ConstantPixelSize;
 
@@ -106,7 +125,10 @@ public class InspectionTaskChecklist : MonoBehaviour
         canvasRect.offsetMin = Vector2.zero;
         canvasRect.offsetMax = Vector2.zero;
 
-        // Main panel
+        // =========================================
+        // MAIN PANEL
+        // =========================================
+
         Image panel = MakeImage(
             root.transform,
             "ChecklistPanel",
@@ -115,7 +137,9 @@ public class InspectionTaskChecklist : MonoBehaviour
             panelOffset
         );
 
-        RectTransform panelRect = panel.rectTransform;
+        RectTransform panelRect =
+            panel.rectTransform;
+
         panelRect.anchorMin = Vector2.one;
         panelRect.anchorMax = Vector2.one;
         panelRect.pivot = Vector2.one;
@@ -124,9 +148,14 @@ public class InspectionTaskChecklist : MonoBehaviour
             panel.gameObject.AddComponent<Outline>();
 
         outline.effectColor = blue;
-        outline.effectDistance = new Vector2(2, -2);
 
-        // Navy header
+        outline.effectDistance =
+            new Vector2(2, -2);
+
+        // =========================================
+        // NAVY HEADER
+        // =========================================
+
         MakeImage(
             panel.transform,
             "HeaderBar",
@@ -147,7 +176,10 @@ public class InspectionTaskChecklist : MonoBehaviour
             TextAlignmentOptions.Center
         );
 
-        // Progress bar background
+        // =========================================
+        // PROGRESS BAR
+        // =========================================
+
         Image progressBackground = MakeImage(
             panel.transform,
             "ProgressBackground",
@@ -167,9 +199,14 @@ public class InspectionTaskChecklist : MonoBehaviour
         RectTransform fillRect =
             progressFill.rectTransform;
 
-        fillRect.anchorMin = new Vector2(0, 0.5f);
-        fillRect.anchorMax = new Vector2(0, 0.5f);
-        fillRect.pivot = new Vector2(0, 0.5f);
+        fillRect.anchorMin =
+            new Vector2(0, 0.5f);
+
+        fillRect.anchorMax =
+            new Vector2(0, 0.5f);
+
+        fillRect.pivot =
+            new Vector2(0, 0.5f);
 
         progressText = MakeText(
             panel.transform,
@@ -183,7 +220,10 @@ public class InspectionTaskChecklist : MonoBehaviour
             TextAlignmentOptions.Center
         );
 
-        // Task rows
+        // =========================================
+        // TASK ROWS
+        // =========================================
+
         for (int i = 0; i < tasks.Length; i++)
         {
             float y = -132 - i * 46f;
@@ -196,7 +236,8 @@ public class InspectionTaskChecklist : MonoBehaviour
                 new Vector2(0, y)
             );
 
-            // Task number
+            // Task number.
+
             MakeText(
                 row.transform,
                 "Number",
@@ -204,26 +245,35 @@ public class InspectionTaskChecklist : MonoBehaviour
                 17,
                 blue,
                 new Vector2(28, 30),
-                new Vector2(-panelSize.x / 2 + 38, 0),
+                new Vector2(
+                    -panelSize.x / 2 + 38, 0
+                ),
                 true,
                 TextAlignmentOptions.Center
             );
 
-            // Green tick drawn with two Image strokes.
+            // Green tick created using
+            // two Image strokes.
+
             GameObject tick = new GameObject(
                 "GreenTick",
                 typeof(RectTransform)
             );
 
-            tick.transform.SetParent(row.transform, false);
+            tick.transform.SetParent(
+                row.transform, false
+            );
 
             RectTransform tickRect =
                 tick.GetComponent<RectTransform>();
 
-            tickRect.sizeDelta = new Vector2(30, 30);
+            tickRect.sizeDelta =
+                new Vector2(30, 30);
 
             tickRect.anchoredPosition =
-                new Vector2(-panelSize.x / 2 + 38, 0);
+                new Vector2(
+                    -panelSize.x / 2 + 38, 0
+                );
 
             Image shortStroke = MakeImage(
                 tick.transform,
@@ -253,7 +303,9 @@ public class InspectionTaskChecklist : MonoBehaviour
                 tasks[i],
                 16,
                 navy,
-                new Vector2(panelSize.x - 85, 34),
+                new Vector2(
+                    panelSize.x - 85, 34
+                ),
                 new Vector2(20, 0),
                 false,
                 TextAlignmentOptions.Left
@@ -262,10 +314,17 @@ public class InspectionTaskChecklist : MonoBehaviour
 
         CacheReferences();
         ResetTasks();
+
         hudCanvas.gameObject.SetActive(false);
 
-        Debug.Log("Training Progress HUD created.");
+        Debug.Log(
+            "Training Progress HUD created."
+        );
     }
+
+    // =========================================
+    // CREATE IMAGE
+    // =========================================
 
     private Image MakeImage(
         Transform parent,
@@ -280,24 +339,37 @@ public class InspectionTaskChecklist : MonoBehaviour
             typeof(Image)
         );
 
-        obj.transform.SetParent(parent, false);
+        obj.transform.SetParent(
+            parent, false
+        );
 
         RectTransform rect =
             obj.GetComponent<RectTransform>();
 
-        rect.anchorMin = new Vector2(0.5f, 1f);
-        rect.anchorMax = new Vector2(0.5f, 1f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchorMin =
+            new Vector2(0.5f, 1f);
+
+        rect.anchorMax =
+            new Vector2(0.5f, 1f);
+
+        rect.pivot =
+            new Vector2(0.5f, 0.5f);
 
         rect.sizeDelta = size;
         rect.anchoredPosition = position;
 
-        Image image = obj.GetComponent<Image>();
+        Image image =
+            obj.GetComponent<Image>();
+
         image.color = color;
         image.raycastTarget = false;
 
         return image;
     }
+
+    // =========================================
+    // CREATE TEXT
+    // =========================================
 
     private TMP_Text MakeText(
         Transform parent,
@@ -316,25 +388,36 @@ public class InspectionTaskChecklist : MonoBehaviour
             typeof(TextMeshProUGUI)
         );
 
-        obj.transform.SetParent(parent, false);
+        obj.transform.SetParent(
+            parent, false
+        );
 
         RectTransform rect =
             obj.GetComponent<RectTransform>();
 
-        rect.anchorMin = new Vector2(0.5f, 1f);
-        rect.anchorMax = new Vector2(0.5f, 1f);
+        rect.anchorMin =
+            new Vector2(0.5f, 1f);
+
+        rect.anchorMax =
+            new Vector2(0.5f, 1f);
+
         rect.sizeDelta = dimensions;
         rect.anchoredPosition = position;
 
-        TMP_Text text = obj.GetComponent<TMP_Text>();
+        TMP_Text text =
+            obj.GetComponent<TMP_Text>();
 
         text.text = content;
         text.fontSize = size;
+
         text.fontStyle =
-            bold ? FontStyles.Bold : FontStyles.Normal;
+            bold
+            ? FontStyles.Bold
+            : FontStyles.Normal;
 
         text.color = color;
         text.alignment = alignment;
+
         text.verticalAlignment =
             VerticalAlignmentOptions.Middle;
 
@@ -346,28 +429,53 @@ public class InspectionTaskChecklist : MonoBehaviour
         return text;
     }
 
+    // =========================================
+    // FIND EXISTING UI REFERENCES
+    // =========================================
+
     private void CacheReferences()
     {
+        // Recover the existing Canvas reference
+        // without rebuilding it.
+
+        if (hudCanvas == null)
+        {
+            Transform existing = transform.Find(
+                "InspectionTaskChecklistCanvas"
+            );
+
+            if (existing != null)
+            {
+                hudCanvas =
+                    existing.GetComponent<Canvas>();
+            }
+        }
+
         if (hudCanvas == null)
             return;
 
         Transform panel =
-            hudCanvas.transform.Find("ChecklistPanel");
+            hudCanvas.transform.Find(
+                "ChecklistPanel"
+            );
 
         if (panel == null)
             return;
 
-        Transform progress =
-            panel.Find("ProgressBackground/ProgressFill");
+        Transform progress = panel.Find(
+            "ProgressBackground/ProgressFill"
+        );
 
-        progressFill = progress != null
+        progressFill =
+            progress != null
             ? progress.GetComponent<Image>()
             : null;
 
         Transform progressLabel =
             panel.Find("ProgressText");
 
-        progressText = progressLabel != null
+        progressText =
+            progressLabel != null
             ? progressLabel.GetComponent<TMP_Text>()
             : null;
 
@@ -380,120 +488,343 @@ public class InspectionTaskChecklist : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            Transform row = panel.Find("TaskRow_" + i);
+            Transform row =
+                panel.Find("TaskRow_" + i);
 
             if (row == null)
                 continue;
 
-            rowImages[i] = row.GetComponent<Image>();
+            rowImages[i] =
+                row.GetComponent<Image>();
 
-            Transform task = row.Find("TaskText");
-            Transform number = row.Find("Number");
-            Transform tick = row.Find("GreenTick");
+            Transform task =
+                row.Find("TaskText");
+
+            Transform number =
+                row.Find("Number");
+
+            Transform tick =
+                row.Find("GreenTick");
 
             if (task != null)
-                taskTexts[i] = task.GetComponent<TMP_Text>();
+            {
+                taskTexts[i] =
+                    task.GetComponent<TMP_Text>();
+            }
 
             if (number != null)
-                numberTexts[i] = number.GetComponent<TMP_Text>();
+            {
+                numberTexts[i] =
+                    number.GetComponent<TMP_Text>();
+            }
 
             if (tick != null)
-                tickObjects[i] = tick.gameObject;
+            {
+                tickObjects[i] =
+                    tick.gameObject;
+            }
         }
     }
+
+    // =========================================
+    // RESET TASKS
+    // =========================================
 
     public void ResetTasks()
     {
         completed = new bool[tasks.Length];
+
         RefreshUI();
     }
+
+    // =========================================
+    // COMPLETE INDIVIDUAL TASK
+    // =========================================
 
     public void CompleteTaskByIndex(int index)
     {
         if (completed == null ||
             index < 0 ||
             index >= completed.Length)
+        {
+            return;
+        }
+
+        // NEW: Prevent duplicate task completion.
+
+        if (completed[index])
             return;
 
         completed[index] = true;
+
         RefreshUI();
 
-        Debug.Log("Task completed: " + tasks[index]);
+        Debug.Log(
+            "Task completed: " + tasks[index]
+        );
+
+        // NEW: Report overall training progress.
+
+        Debug.Log(
+            "Training Progress: " +
+            GetCompletedTaskCount() + " / " +
+            GetTotalTaskCount() + " completed (" +
+            GetProgressPercentage() + "%)"
+        );
+
+        // NEW: Confirm all six tasks are complete.
+
+        if (AreAllTasksCompleted())
+        {
+            Debug.Log(
+                "All six inspection training tasks completed."
+            );
+        }
     }
+
+    // =========================================
+    // COMPLETE CURRENT TASK
+    // =========================================
 
     public void CompleteCurrentTask()
     {
         if (completed == null)
             return;
 
-        for (int i = 0; i < completed.Length; i++)
+        for (int i = 0;
+             i < completed.Length;
+             i++)
         {
             if (!completed[i])
             {
                 CompleteTaskByIndex(i);
+
                 return;
             }
         }
     }
 
+    // =========================================
+    // NEW: GET TOTAL TASK COUNT
+    // =========================================
+
+    public int GetTotalTaskCount()
+    {
+        if (tasks == null)
+            return 0;
+
+        return tasks.Length;
+    }
+
+    // =========================================
+    // NEW: GET COMPLETED TASK COUNT
+    // =========================================
+
+    public int GetCompletedTaskCount()
+    {
+        if (completed == null)
+            return 0;
+
+        int completedCount = 0;
+
+        for (int i = 0;
+             i < completed.Length;
+             i++)
+        {
+            if (completed[i])
+                completedCount++;
+        }
+
+        return completedCount;
+    }
+
+    // =========================================
+    // NEW: GET PROGRESS PERCENTAGE
+    // =========================================
+
+    public int GetProgressPercentage()
+    {
+        int totalTasks =
+            GetTotalTaskCount();
+
+        if (totalTasks == 0)
+            return 0;
+
+        float progress =
+            (float)GetCompletedTaskCount() /
+            totalTasks;
+
+        return Mathf.RoundToInt(
+            progress * 100f
+        );
+    }
+
+    // =========================================
+    // NEW: CHECK AN INDIVIDUAL TASK
+    // =========================================
+
+    public bool IsTaskCompleted(int index)
+    {
+        if (completed == null ||
+            index < 0 ||
+            index >= completed.Length)
+        {
+            return false;
+        }
+
+        return completed[index];
+    }
+
+    // =========================================
+    // NEW: VALIDATE ALL SIX TRAINING TASKS
+    // =========================================
+
+    public bool AreAllTasksCompleted()
+    {
+        if (tasks == null ||
+            completed == null)
+        {
+            return false;
+        }
+
+        // Guided training requires six tasks.
+
+        if (tasks.Length != 6 ||
+            completed.Length != tasks.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0;
+             i < completed.Length;
+             i++)
+        {
+            if (!completed[i])
+                return false;
+        }
+
+        return true;
+    }
+
+    // =========================================
+    // NEW: IDENTIFY FIRST INCOMPLETE TASK
+    // =========================================
+
+    public string GetFirstIncompleteTask()
+    {
+        if (completed == null ||
+            tasks == null ||
+            completed.Length != tasks.Length ||
+            tasks.Length != 6)
+        {
+            return "Training checklist is not ready.";
+        }
+
+        for (int i = 0;
+             i < completed.Length;
+             i++)
+        {
+            if (!completed[i])
+                return tasks[i];
+        }
+
+        return "";
+    }
+
+    // =========================================
+    // REFRESH CHECKLIST VISUALS
+    // =========================================
+
     private void RefreshUI()
     {
-        if (completed == null || rowImages == null)
+        if (completed == null ||
+            rowImages == null)
+        {
             return;
+        }
 
         int doneCount = 0;
         int currentIndex = -1;
 
-        for (int i = 0; i < completed.Length; i++)
+        for (int i = 0;
+             i < completed.Length;
+             i++)
         {
             if (completed[i])
+            {
                 doneCount++;
+            }
             else if (currentIndex == -1)
+            {
                 currentIndex = i;
+            }
         }
 
-        for (int i = 0; i < completed.Length; i++)
+        for (int i = 0;
+             i < completed.Length &&
+             i < rowImages.Length;
+             i++)
         {
             if (rowImages[i] == null)
                 continue;
 
             bool isDone = completed[i];
-            bool isCurrent = i == currentIndex;
 
-            rowImages[i].color = isDone
+            bool isCurrent =
+                i == currentIndex;
+
+            rowImages[i].color =
+                isDone
                 ? done
                 : isCurrent
                     ? current
                     : pale;
 
             if (tickObjects[i] != null)
-                tickObjects[i].SetActive(isDone);
+            {
+                tickObjects[i].SetActive(
+                    isDone
+                );
+            }
 
             if (numberTexts[i] != null)
-                numberTexts[i].gameObject.SetActive(!isDone);
+            {
+                numberTexts[i]
+                    .gameObject.SetActive(
+                        !isDone
+                    );
+            }
 
             if (taskTexts[i] != null)
             {
                 taskTexts[i].color =
-                    isDone ? green :
-                    isCurrent ? navy :
-                    new Color32(105, 119, 138, 255);
+                    isDone
+                    ? green
+                    : isCurrent
+                        ? navy
+                        : new Color32(
+                            105, 119, 138, 255
+                        );
 
-                taskTexts[i].fontStyle = isCurrent
+                taskTexts[i].fontStyle =
+                    isCurrent
                     ? FontStyles.Bold
                     : FontStyles.Normal;
             }
         }
 
-        float percentage = completed.Length > 0
-            ? (float)doneCount / completed.Length
+        float percentage =
+            completed.Length > 0
+            ? (float)doneCount /
+                completed.Length
             : 0f;
 
         if (progressFill != null)
         {
             progressFill.rectTransform.sizeDelta =
                 new Vector2(
-                    (panelSize.x - 32) * percentage,
+                    (panelSize.x - 32) *
+                    percentage,
                     12
                 );
         }
@@ -501,11 +832,19 @@ public class InspectionTaskChecklist : MonoBehaviour
         if (progressText != null)
         {
             progressText.text =
-                doneCount + " / " + completed.Length +
+                doneCount + " / " +
+                completed.Length +
                 " completed  (" +
-                Mathf.RoundToInt(percentage * 100) + "%)";
+                Mathf.RoundToInt(
+                    percentage * 100
+                ) +
+                "%)";
         }
     }
+
+    // =========================================
+    // SHOW AND HIDE HUD
+    // =========================================
 
     public void ShowHUD()
     {
@@ -519,17 +858,60 @@ public class InspectionTaskChecklist : MonoBehaviour
             hudCanvas.gameObject.SetActive(false);
     }
 
-    // EZPZ / Unity event functions
-    public void CompleteTask0() { CompleteTaskByIndex(0); }
-    public void CompleteTask1() { CompleteTaskByIndex(1); }
-    public void CompleteTask2() { CompleteTaskByIndex(2); }
-    public void CompleteTask3() { CompleteTaskByIndex(3); }
-    public void CompleteTask4() { CompleteTaskByIndex(4); }
-    public void CompleteTask5() { CompleteTaskByIndex(5); }
+    // =========================================
+    // EXISTING EZPZ / UNITY EVENT FUNCTIONS
+    // =========================================
+
+    public void CompleteTask0()
+    {
+        CompleteTaskByIndex(0);
+    }
+
+    public void CompleteTask1()
+    {
+        CompleteTaskByIndex(1);
+    }
+
+    public void CompleteTask2()
+    {
+        CompleteTaskByIndex(2);
+    }
+
+    public void CompleteTask3()
+    {
+        CompleteTaskByIndex(3);
+    }
+
+    public void CompleteTask4()
+    {
+        CompleteTaskByIndex(4);
+    }
+
+    public void CompleteTask5()
+    {
+        CompleteTaskByIndex(5);
+    }
+
+    // =========================================
+    // EDIT MODE PREVIEW
+    // =========================================
 
     [ContextMenu("TEST Complete Next Task")]
     private void TestCompleteNextTask()
     {
+        // Preview only. Prevent manual test
+        // completion during real training.
+
+        if (Application.isPlaying)
+        {
+            Debug.LogWarning(
+                "Manual checklist testing is disabled " +
+                "during Play Mode."
+            );
+
+            return;
+        }
+
         if (completed == null)
         {
             CacheReferences();
@@ -537,5 +919,40 @@ public class InspectionTaskChecklist : MonoBehaviour
         }
 
         CompleteCurrentTask();
+    }
+
+    // =========================================
+    // NEW: CHECK TRAINING STATUS
+    // =========================================
+
+    [ContextMenu("Check Training Completion Status")]
+    private void CheckTrainingCompletionStatus()
+    {
+        Debug.Log(
+            "Completed tasks: " +
+            GetCompletedTaskCount() +
+            " / " +
+            GetTotalTaskCount()
+        );
+
+        Debug.Log(
+            "Progress: " +
+            GetProgressPercentage() +
+            "%"
+        );
+
+        if (AreAllTasksCompleted())
+        {
+            Debug.Log(
+                "Checklist complete: All six tasks are completed."
+            );
+        }
+        else
+        {
+            Debug.Log(
+                "Training incomplete. Pending task: " +
+                GetFirstIncompleteTask()
+            );
+        }
     }
 }

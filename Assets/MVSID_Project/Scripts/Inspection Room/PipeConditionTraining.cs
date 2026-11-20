@@ -12,6 +12,9 @@ public class PipeConditionTraining : MonoBehaviour
     [Header("Condition Training")]
     public GameObject conditionPanel;
 
+    [Header("Training Progress Checklist")]
+    public InspectionTaskChecklist taskChecklist;
+
     [Header("Automatic Transition")]
     public bool openAfterCalculation = true;
     public float transitionDelay = 2f;
@@ -34,6 +37,9 @@ public class PipeConditionTraining : MonoBehaviour
     private bool completionDetected;
     private float completionTime;
     private int lastActionFrame = -1;
+
+    // NEW: Prevent duplicate checklist completion.
+    private bool conditionTaskCompleted;
 
     private readonly Color navy =
         new Color32(26, 73, 135, 255);
@@ -65,6 +71,8 @@ public class PipeConditionTraining : MonoBehaviour
         FindReferences();
         FindControls();
         BindButtons();
+
+        conditionTaskCompleted = false;
 
         if (conditionPanel != null)
             conditionPanel.SetActive(false);
@@ -116,7 +124,9 @@ public class PipeConditionTraining : MonoBehaviour
         if (conditionPanel == null)
         {
             Transform found =
-                transform.Find("PipeConditionTrainingPanel");
+                transform.Find(
+                    "PipeConditionTrainingPanel"
+                );
 
             if (found != null)
                 conditionPanel = found.gameObject;
@@ -128,7 +138,8 @@ public class PipeConditionTraining : MonoBehaviour
         if (materialLossTraining == null)
             return false;
 
-        TMP_Text step = materialLossTraining.stepText;
+        TMP_Text step =
+            materialLossTraining.stepText;
 
         if (step != null &&
             step.text.ToUpperInvariant()
@@ -162,6 +173,7 @@ public class PipeConditionTraining : MonoBehaviour
             Debug.LogWarning(
                 "Stop Play Mode before building."
             );
+
             return;
         }
 
@@ -177,16 +189,19 @@ public class PipeConditionTraining : MonoBehaviour
                 "Attach PipeConditionTraining to " +
                 "the World Space training Canvas."
             );
+
             return;
         }
 
         Transform old =
-            transform.Find("PipeConditionTrainingPanel");
+            transform.Find(
+                "PipeConditionTrainingPanel"
+            );
 
         if (old != null)
         {
-            // Keep an existing panel and its
-            // references when rebuilding.
+            // Preserve the existing panel.
+
             conditionPanel = old.gameObject;
         }
         else
@@ -215,7 +230,10 @@ public class PipeConditionTraining : MonoBehaviour
         panelImage.color = Color.white;
         panelImage.raycastTarget = true;
 
-        // Header
+        // =========================================
+        // HEADER
+        // =========================================
+
         CreateText(
             conditionPanel.transform,
             "SectionTitle",
@@ -247,7 +265,10 @@ public class PipeConditionTraining : MonoBehaviour
             0, 284, 730, 3
         );
 
-        // Activity introduction
+        // =========================================
+        // ACTIVITY INTRODUCTION
+        // =========================================
+
         headingText = CreateText(
             conditionPanel.transform,
             "LearningHeading",
@@ -265,7 +286,10 @@ public class PipeConditionTraining : MonoBehaviour
             0, 177, 730, 55
         );
 
-        // Three reference cards
+        // =========================================
+        // CONDITION REFERENCE CARDS
+        // =========================================
+
         CreateConditionCard(
             "NormalCard",
             "NORMAL",
@@ -293,7 +317,10 @@ public class PipeConditionTraining : MonoBehaviour
             red
         );
 
-        // Trainee's measurement
+        // =========================================
+        // TRAINEE MEASUREMENT
+        // =========================================
+
         CreateRectangle(
             conditionPanel.transform,
             "CalculatedLossBackground",
@@ -325,7 +352,10 @@ public class PipeConditionTraining : MonoBehaviour
             0, -132, 730, 40
         );
 
-        // Selection buttons
+        // =========================================
+        // CONDITION SELECTION BUTTONS
+        // =========================================
+
         normalButton = CreateButton(
             "NormalButton",
             "NORMAL",
@@ -437,7 +467,10 @@ public class PipeConditionTraining : MonoBehaviour
                 typeof(Image)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             existing = obj.transform;
         }
 
@@ -479,7 +512,10 @@ public class PipeConditionTraining : MonoBehaviour
                 typeof(TextMeshProUGUI)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             existing = obj.transform;
         }
 
@@ -556,6 +592,7 @@ public class PipeConditionTraining : MonoBehaviour
         if (collider != null)
         {
             collider.center = Vector3.zero;
+
             collider.size = new Vector3(
                 width, height, 4f
             );
@@ -566,7 +603,9 @@ public class PipeConditionTraining : MonoBehaviour
             "ButtonText",
             caption,
             20, Color.white, FontStyles.Bold,
-            0, 0, width - 12, height - 8
+            0, 0,
+            width - 12,
+            height - 8
         );
 
         return button;
@@ -601,7 +640,9 @@ public class PipeConditionTraining : MonoBehaviour
             new Vector2(width, height);
 
         rect.localScale = Vector3.one;
-        rect.localRotation = Quaternion.identity;
+
+        rect.localRotation =
+            Quaternion.identity;
     }
 
     // =========================================
@@ -626,7 +667,10 @@ public class PipeConditionTraining : MonoBehaviour
             FindText(root, "InstructionText");
 
         thicknessLossText =
-            FindText(root, "CalculatedThicknessLoss");
+            FindText(
+                root,
+                "CalculatedThicknessLoss"
+            );
 
         feedbackText =
             FindText(root, "FeedbackText");
@@ -722,12 +766,16 @@ public class PipeConditionTraining : MonoBehaviour
             Debug.LogWarning(
                 "Build the condition panel first."
             );
+
             return;
         }
 
         activityOpened = true;
         answerCorrect = false;
         selectedCondition = "";
+
+        // NEW: Reset checklist completion guard.
+        conditionTaskCompleted = false;
 
         PipeInspectionData data =
             materialLossTraining != null &&
@@ -771,10 +819,12 @@ public class PipeConditionTraining : MonoBehaviour
             continueButton.gameObject.SetActive(false);
 
         // Hide previous activity and show Step 5.
+
         if (materialLossPanel != null)
             materialLossPanel.SetActive(false);
 
         conditionPanel.SetActive(true);
+
         conditionPanel.transform.SetAsLastSibling();
 
         Debug.Log(
@@ -834,14 +884,17 @@ public class PipeConditionTraining : MonoBehaviour
                 selectedButton.GetComponent<Image>();
 
             if (image != null)
+            {
                 image.color =
                     new Color32(42, 117, 190, 255);
+            }
         }
 
         if (feedbackText != null)
         {
             feedbackText.text =
-                choice + " selected. Press CHECK CONDITION.";
+                choice +
+                " selected. Press CHECK CONDITION.";
 
             feedbackText.color = dark;
         }
@@ -874,6 +927,7 @@ public class PipeConditionTraining : MonoBehaviour
                 "Select Normal, Moderate or Critical.",
                 dark
             );
+
             return;
         }
 
@@ -884,6 +938,7 @@ public class PipeConditionTraining : MonoBehaviour
                 "Pipe inspection data is unavailable.",
                 Color.red
             );
+
             return;
         }
 
@@ -993,8 +1048,60 @@ public class PipeConditionTraining : MonoBehaviour
         if (continueButton != null)
             continueButton.gameObject.SetActive(false);
 
+        // NEW: Complete Task 3.
+
+        CompleteCorrosionIdentificationTask();
+
         Debug.Log(
             "Pipe condition training completed."
+        );
+    }
+
+    // =========================================
+    // NEW: COMPLETE CHECKLIST TASK 3
+    // =========================================
+
+    private void CompleteCorrosionIdentificationTask()
+    {
+        // Prevent duplicate completion.
+
+        if (conditionTaskCompleted)
+            return;
+
+        // Require a correct classification.
+
+        if (!answerCorrect)
+            return;
+
+        // Find the checklist automatically if
+        // the Inspector reference is missing.
+
+        if (taskChecklist == null)
+        {
+            taskChecklist =
+                FindFirstObjectByType<
+                    InspectionTaskChecklist
+                >();
+        }
+
+        if (taskChecklist == null)
+        {
+            Debug.LogWarning(
+                "Inspection Task Checklist not assigned."
+            );
+
+            return;
+        }
+
+        // Mark Identify Corrosion as completed.
+
+        taskChecklist.CompleteTask2();
+
+        conditionTaskCompleted = true;
+
+        Debug.Log(
+            "Training Checklist: " +
+            "Identify corrosion completed."
         );
     }
 }

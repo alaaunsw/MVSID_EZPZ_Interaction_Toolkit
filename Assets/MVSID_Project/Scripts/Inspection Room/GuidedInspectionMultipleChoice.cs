@@ -18,6 +18,10 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
     [Header("Separate Multiple Choice Panel")]
     public GameObject multipleChoicePanel;
 
+    // NEW: Training progress checklist.
+    [Header("Training Progress Checklist")]
+    public InspectionTaskChecklist taskChecklist;
+
     [Header("Training Transition")]
     public bool openAfterConditionTraining = true;
 
@@ -146,31 +150,37 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             "PIPE_0493",
             "PIPE_0007"
         },
+
         {
             "Inside the control room",
             "At the pipe outlet",
             "At the affected pipe support"
         },
+
         {
             "Corrosion observed at the pipe support",
             "No visible damage was observed",
             "A confirmed active leak was observed"
         },
+
         {
             "11.11 mm original / 7.70 mm remaining",
             "7.70 mm original / 11.11 mm remaining",
             "11.11 mm original / 3.41 mm remaining"
         },
+
         {
             "2.41 mm loss / 20.69%",
             "5.41 mm loss / 48.69%",
             "3.41 mm loss / 30.69%"
         },
+
         {
             "Normal",
             "Moderate",
             "Critical"
         },
+
         {
             "Refer the finding for engineering assessment",
             "Repair the pipe without authorisation",
@@ -312,6 +322,7 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             Debug.LogWarning(
                 "Stop Play Mode before building."
             );
+
             return;
         }
 
@@ -326,13 +337,13 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 "Attach this script to the existing " +
                 "World Space training Canvas."
             );
+
             return;
         }
 
-        // IMPORTANT:
-        // This creates a SEPARATE panel.
-        // It does not modify GuidedInspectionReportPanel
-        // or ReportVirtualKeyboardPanel.
+        // This creates a separate panel.
+        // Existing report and keyboard panels
+        // are not modified.
 
         Transform existing =
             transform.Find(
@@ -360,13 +371,16 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         }
 
 #if UNITY_EDITOR
+
         Undo.RegisterFullObjectHierarchyUndo(
             multipleChoicePanel,
             "Build Multiple Choice Report"
         );
+
 #endif
 
-        Transform root = multipleChoicePanel.transform;
+        Transform root =
+            multipleChoicePanel.transform;
 
         SetRect(root, 0, 0, 820, 760);
 
@@ -374,8 +388,10 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             multipleChoicePanel.GetComponent<Image>();
 
         if (background == null)
+        {
             background =
                 multipleChoicePanel.AddComponent<Image>();
+        }
 
         background.color = Color.white;
         background.raycastTarget = true;
@@ -629,21 +645,26 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         FindUI();
         ShowQuestion(0);
 
-        multipleChoicePanel.transform.SetAsLastSibling();
+        multipleChoicePanel.transform
+            .SetAsLastSibling();
 
 #if UNITY_EDITOR
+
         if (copyEZPZInteractions)
             ConfigureEZPZInteractions();
+
 #endif
 
         multipleChoicePanel.SetActive(false);
 
 #if UNITY_EDITOR
+
         EditorUtility.SetDirty(this);
 
         EditorSceneManager.MarkSceneDirty(
             gameObject.scene
         );
+
 #endif
 
         Debug.Log(
@@ -670,11 +691,17 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 typeof(RectTransform)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             found = obj.transform;
         }
 
-        SetRect(found, x, y, width, height);
+        SetRect(
+            found, x, y, width, height
+        );
+
         return found;
     }
 
@@ -695,13 +722,19 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 typeof(Image)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             found = obj.transform;
         }
 
-        SetRect(found, x, y, width, height);
+        SetRect(
+            found, x, y, width, height
+        );
 
-        Image image = found.GetComponent<Image>();
+        Image image =
+            found.GetComponent<Image>();
 
         if (image != null)
         {
@@ -733,13 +766,19 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 typeof(TextMeshProUGUI)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             found = obj.transform;
         }
 
-        SetRect(found, x, y, width, height);
+        SetRect(
+            found, x, y, width, height
+        );
 
-        TMP_Text text = found.GetComponent<TMP_Text>();
+        TMP_Text text =
+            found.GetComponent<TMP_Text>();
 
         text.text = value;
         text.fontSize = size;
@@ -777,36 +816,55 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 typeof(BoxCollider)
             );
 
-            obj.transform.SetParent(parent, false);
+            obj.transform.SetParent(
+                parent, false
+            );
+
             found = obj.transform;
         }
 
-        SetRect(found, x, y, width, height);
+        SetRect(
+            found, x, y, width, height
+        );
 
-        Image image = found.GetComponent<Image>();
+        Image image =
+            found.GetComponent<Image>();
 
         if (image == null)
-            image = found.gameObject.AddComponent<Image>();
+        {
+            image =
+                found.gameObject.AddComponent<Image>();
+        }
 
         image.color = background;
         image.raycastTarget = true;
 
-        Button button = found.GetComponent<Button>();
+        Button button =
+            found.GetComponent<Button>();
 
         if (button == null)
-            button = found.gameObject.AddComponent<Button>();
+        {
+            button =
+                found.gameObject.AddComponent<Button>();
+        }
 
         button.targetGraphic = image;
         button.interactable = true;
-        button.transition = Selectable.Transition.None;
+
+        button.transition =
+            Selectable.Transition.None;
 
         BoxCollider collider =
             found.GetComponent<BoxCollider>();
 
         if (collider == null)
-            collider = found.gameObject.AddComponent<BoxCollider>();
+        {
+            collider =
+                found.gameObject.AddComponent<BoxCollider>();
+        }
 
         collider.center = Vector3.zero;
+
         collider.size = new Vector3(
             width, height, 4f
         );
@@ -816,7 +874,9 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             "ButtonText",
             caption,
             20, foreground, FontStyles.Bold,
-            0, 0, width - 28, height - 10,
+            0, 0,
+            width - 28,
+            height - 10,
             TextAlignmentOptions.Center
         );
 
@@ -850,7 +910,8 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         float x, float y,
         float width, float height)
     {
-        RectTransform rect = target as RectTransform;
+        RectTransform rect =
+            target as RectTransform;
 
         if (rect == null)
             return;
@@ -871,7 +932,9 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             new Vector2(width, height);
 
         rect.localScale = Vector3.one;
-        rect.localRotation = Quaternion.identity;
+
+        rect.localRotation =
+            Quaternion.identity;
     }
 
     // =========================================
@@ -883,9 +946,10 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         if (multipleChoicePanel == null)
             return;
 
-        content = multipleChoicePanel.transform.Find(
-            "MultipleChoiceContent"
-        );
+        content =
+            multipleChoicePanel.transform.Find(
+                "MultipleChoiceContent"
+            );
 
         if (content == null)
             return;
@@ -899,28 +963,45 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         Transform submitted =
             content.Find("ReportSubmittedScreen");
 
-        questionScreen = question != null
-            ? question.gameObject : null;
+        questionScreen =
+            question != null
+            ? question.gameObject
+            : null;
 
-        previewScreen = preview != null
-            ? preview.gameObject : null;
+        previewScreen =
+            preview != null
+            ? preview.gameObject
+            : null;
 
-        submittedScreen = submitted != null
-            ? submitted.gameObject : null;
+        submittedScreen =
+            submitted != null
+            ? submitted.gameObject
+            : null;
 
         if (question != null)
         {
             fieldNumberText =
-                FindText(question, "FieldNumber");
+                FindText(
+                    question,
+                    "FieldNumber"
+                );
 
             headingText =
-                FindText(question, "LearningHeading");
+                FindText(
+                    question,
+                    "LearningHeading"
+                );
 
             instructionText =
-                FindText(question, "InstructionText");
+                FindText(
+                    question,
+                    "InstructionText"
+                );
 
             Transform explanationBox =
-                question.Find("WhyThisMattersBox");
+                question.Find(
+                    "WhyThisMattersBox"
+                );
 
             explanationText =
                 FindText(
@@ -929,7 +1010,10 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 );
 
             feedbackText =
-                FindText(question, "FeedbackText");
+                FindText(
+                    question,
+                    "FeedbackText"
+                );
 
             for (int i = 0; i < 3; i++)
             {
@@ -962,19 +1046,31 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         if (preview != null)
         {
             previewText =
-                FindText(preview, "PreviewBody");
+                FindText(
+                    preview,
+                    "PreviewBody"
+                );
 
             editButton =
-                FindButton(preview, "EditReportButton");
+                FindButton(
+                    preview,
+                    "EditReportButton"
+                );
 
             submitButton =
-                FindButton(preview, "SubmitReportButton");
+                FindButton(
+                    preview,
+                    "SubmitReportButton"
+                );
         }
 
         if (submitted != null)
         {
             submissionText =
-                FindText(submitted, "SubmissionText");
+                FindText(
+                    submitted,
+                    "SubmissionText"
+                );
         }
     }
 
@@ -1054,7 +1150,8 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             int index;
 
             if (int.TryParse(
-                action.Substring(7), out index
+                action.Substring(7),
+                out index
             ))
             {
                 SelectAnswer(index);
@@ -1066,18 +1163,22 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         switch (action)
         {
             case "CHECK":
+
                 CheckAnswer();
                 break;
 
             case "NEXT":
+
                 NextField();
                 break;
 
             case "EDIT":
+
                 ReviewAgain();
                 break;
 
             case "SUBMIT":
+
                 SubmitReport();
                 break;
         }
@@ -1095,6 +1196,7 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             Debug.LogWarning(
                 "Open this activity during Play Mode."
             );
+
             return;
         }
 
@@ -1108,22 +1210,29 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             Debug.LogError(
                 "Build Multiple Choice Report first."
             );
+
             return;
         }
 
         reportingOpened = true;
         reportSubmitted = false;
 
-        for (int i = 0; i < recordedAnswers.Length; i++)
+        for (int i = 0;
+             i < recordedAnswers.Length;
+             i++)
         {
             recordedAnswers[i] = "";
         }
 
         if (conditionTrainingPanel != null)
+        {
             conditionTrainingPanel.SetActive(false);
+        }
 
         multipleChoicePanel.SetActive(true);
-        multipleChoicePanel.transform.SetAsLastSibling();
+
+        multipleChoicePanel.transform
+            .SetAsLastSibling();
 
         ShowQuestion(0);
 
@@ -1141,7 +1250,9 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         if (questionScreen == null)
             return;
 
-        currentField = Mathf.Clamp(index, 0, 6);
+        currentField =
+            Mathf.Clamp(index, 0, 6);
+
         selectedChoice = -1;
         answerCorrect = false;
 
@@ -1162,10 +1273,16 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         }
 
         if (headingText != null)
-            headingText.text = fieldNames[currentField];
+        {
+            headingText.text =
+                fieldNames[currentField];
+        }
 
         if (instructionText != null)
-            instructionText.text = instructions[currentField];
+        {
+            instructionText.text =
+                instructions[currentField];
+        }
 
         if (explanationText != null)
         {
@@ -1183,7 +1300,8 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
 
             button.gameObject.SetActive(true);
 
-            Image image = button.GetComponent<Image>();
+            Image image =
+                button.GetComponent<Image>();
 
             if (image != null)
                 image.color = paleBlue;
@@ -1230,7 +1348,8 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 continue;
 
             Image image =
-                choiceButtons[i].GetComponent<Image>();
+                choiceButtons[i]
+                .GetComponent<Image>();
 
             if (image != null)
             {
@@ -1270,6 +1389,7 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 "Please select an answer first.",
                 red
             );
+
             return;
         }
 
@@ -1280,6 +1400,7 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 retryMessages[currentField],
                 red
             );
+
             return;
         }
 
@@ -1294,7 +1415,9 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         );
 
         if (checkButton != null)
+        {
             checkButton.gameObject.SetActive(false);
+        }
 
         if (nextButton != null)
         {
@@ -1307,7 +1430,8 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
 
             if (label != null)
             {
-                label.text = currentField == 6
+                label.text =
+                    currentField == 6
                     ? "REVIEW REPORT"
                     : "NEXT FIELD";
             }
@@ -1365,11 +1489,16 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         string report =
             "<b>PIPELINE INSPECTION REPORT</b>\n\n";
 
-        for (int i = 0; i < recordedAnswers.Length; i++)
+        for (int i = 0;
+             i < recordedAnswers.Length;
+             i++)
         {
             report +=
-                "<b>" + fieldNames[i] + ":</b> " +
-                recordedAnswers[i] + "\n\n";
+                "<b>" +
+                fieldNames[i] +
+                ":</b> " +
+                recordedAnswers[i] +
+                "\n\n";
         }
 
         previewText.text = report;
@@ -1382,6 +1511,7 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
 
         // Preserve the collected answers.
         // The trainee can redo the questions.
+
         ShowQuestion(0);
     }
 
@@ -1401,6 +1531,7 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 Debug.LogWarning(
                     "Complete all seven report fields."
                 );
+
                 return;
             }
         }
@@ -1427,10 +1558,59 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 "operating conditions without authorisation.";
         }
 
+        // NEW: Complete Task 4 - Record findings.
+
+        CompleteRecordFindingsTask();
+
         Debug.Log(
             "PIPE_0493 inspection report submitted."
         );
     }
+
+    // =========================================
+    // NEW: COMPLETE CHECKLIST TASK 4
+    // =========================================
+
+    private void CompleteRecordFindingsTask()
+    {
+        // Require successful report submission.
+
+        if (!reportSubmitted)
+            return;
+
+        // Find the checklist automatically
+        // if the Inspector reference is missing.
+
+        if (taskChecklist == null)
+        {
+            taskChecklist =
+                FindFirstObjectByType<
+                    InspectionTaskChecklist
+                >();
+        }
+
+        if (taskChecklist == null)
+        {
+            Debug.LogWarning(
+                "Inspection Task Checklist not assigned."
+            );
+
+            return;
+        }
+
+        // Complete Record Findings.
+
+        taskChecklist.CompleteTask3();
+
+        Debug.Log(
+            "Training Checklist: " +
+            "Record findings completed."
+        );
+    }
+
+    // =========================================
+    // REPORT STATUS
+    // =========================================
 
     public bool IsReportSubmitted()
     {
@@ -1442,11 +1622,15 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
         string report =
             "PIPELINE INSPECTION REPORT\n";
 
-        for (int i = 0; i < recordedAnswers.Length; i++)
+        for (int i = 0;
+             i < recordedAnswers.Length;
+             i++)
         {
             report +=
-                fieldNames[i] + ": " +
-                recordedAnswers[i] + "\n";
+                fieldNames[i] +
+                ": " +
+                recordedAnswers[i] +
+                "\n";
         }
 
         return report;
@@ -1467,16 +1651,20 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
 
         if (multipleChoicePanel == null ||
             questionScreen == null)
+        {
             return;
+        }
 
         multipleChoicePanel.SetActive(true);
 
         ShowQuestion(0);
 
 #if UNITY_EDITOR
+
         EditorSceneManager.MarkSceneDirty(
             gameObject.scene
         );
+
 #endif
     }
 
@@ -1487,12 +1675,16 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             return;
 
         if (multipleChoicePanel != null)
+        {
             multipleChoicePanel.SetActive(false);
+        }
 
 #if UNITY_EDITOR
+
         EditorSceneManager.MarkSceneDirty(
             gameObject.scene
         );
+
 #endif
     }
 
@@ -1516,6 +1708,7 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             Debug.LogWarning(
                 "Build the multiple-choice report first."
             );
+
             return;
         }
 
@@ -1525,13 +1718,15 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 "Assign a working CalculatorKey " +
                 "with InteractableGeneral attached."
             );
+
             return;
         }
 
         Component donorInteraction = null;
 
         foreach (Component component in
-            calculatorKeyTemplate.GetComponents<Component>())
+            calculatorKeyTemplate
+                .GetComponents<Component>())
         {
             if (component != null &&
                 component.GetType().Name ==
@@ -1548,6 +1743,7 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 "The calculator template has no " +
                 "InteractableGeneral component."
             );
+
             return;
         }
 
@@ -1630,8 +1826,8 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                 }
 
                 for (int i = 0;
-                    i < iterator.arraySize;
-                    i++)
+                     i < iterator.arraySize;
+                     i++)
                 {
                     SerializedProperty call =
                         iterator.GetArrayElementAtIndex(i);
@@ -1646,14 +1842,21 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
                             "m_MethodName"
                         );
 
-                    if (target == null || method == null)
+                    if (target == null ||
+                        method == null)
+                    {
                         continue;
+                    }
 
                     if (target.objectReferenceValue ==
                         calculatorKeyTemplate)
                     {
-                        target.objectReferenceValue = key;
-                        method.stringValue = "Activate";
+                        target.objectReferenceValue =
+                            key;
+
+                        method.stringValue =
+                            "Activate";
+
                         rewired = true;
                     }
                 }
@@ -1662,7 +1865,9 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
             if (rewired)
             {
                 serialized.ApplyModifiedProperties();
+
                 EditorUtility.SetDirty(interaction);
+
                 connected++;
             }
             else
@@ -1691,4 +1896,5 @@ public class GuidedInspectionMultipleChoice : MonoBehaviour
     }
 
 #endif
+
 }

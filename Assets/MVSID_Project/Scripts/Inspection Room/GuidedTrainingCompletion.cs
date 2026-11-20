@@ -1,4 +1,5 @@
 
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
@@ -17,6 +18,24 @@ public class GuidedTrainingCompletion : MonoBehaviour
     public GuidedEngineerCommunication engineerTraining;
     public GuidedInspectionMultipleChoice reportingTraining;
 
+    [Header("Training Progress Checklist")]
+    public InspectionTaskChecklist taskChecklist;
+
+    [Header("Individual Trainee Progress")]
+    public SafetyTraineeProgressManager traineeProgressManager;
+    public SafetyTraineeAccountManager accountManager;
+
+    [Header("Current Training Session")]
+    [SerializeField] private string trainingSessionId = "";
+    [SerializeField] private string sessionTraineeId = "";
+    [SerializeField] private bool sessionRecorded;
+    [SerializeField] private int successfulTrainingSessions;
+    [SerializeField] private int requiredTrainingSessions;
+    [SerializeField] private int remainingTrainingSessions;
+
+    [Header("Safety Verification")]
+    [SerializeField] private bool safetyPrerequisiteSatisfied;
+
     [Header("Generated Completion Panel")]
     public GameObject completionPanel;
 
@@ -24,17 +43,22 @@ public class GuidedTrainingCompletion : MonoBehaviour
     public string mainMenuSceneName = "";
     public string testingModeSceneName = "";
 
-    [Header("Progress")]
-    public string completionSaveKey =
-        "PIPE_0493_GuidedTrainingComplete";
+    [Header("Repeat Training")]
+    public string guidedTrainingSceneName =
+        "Training Environment 1";
 
     [Header("EZPZ Interaction")]
     public MaterialLossCalculatorKey calculatorKeyTemplate;
     public bool copyEZPZInteractions = true;
 
     private Button finishButton;
+    private Button startTestingButton;
+    private TMP_Text startTestingButtonText;
     private TMP_Text statusText;
+
     private bool completed;
+    private bool processingCompletion;
+    private bool loadingScene;
 
     private readonly Color navy =
         new Color32(26, 73, 135, 255);
@@ -51,28 +75,130 @@ public class GuidedTrainingCompletion : MonoBehaviour
     private readonly Color green =
         new Color32(24, 170, 91, 255);
 
+    // ==========================================
+    // UNITY
+    // ==========================================
+
     private void Start()
     {
         FindReferences();
         ConnectButtons();
 
+        completed = false;
+        processingCompletion = false;
+        sessionRecorded = false;
+        loadingScene = false;
+        safetyPrerequisiteSatisfied = false;
+
+        BeginTrainingSession();
+
         if (completionPanel != null)
             completionPanel.SetActive(false);
     }
 
+    // ==========================================
+    // BEGIN A UNIQUE TRAINING SESSION
+    // ==========================================
+
+    private void BeginTrainingSession()
+    {
+        trainingSessionId =
+            Guid.NewGuid().ToString("N");
+
+        sessionTraineeId = "";
+
+        if (accountManager != null &&
+            accountManager.IsLoggedIn)
+        {
+            sessionTraineeId =
+                accountManager.CurrentTraineeId;
+
+            Debug.Log(
+                "Guided training session started for: " +
+                accountManager.CurrentUsername
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "No trainee is logged in. " +
+                "Training progress cannot be saved."
+            );
+        }
+
+        // NEW: Check verified Safety Room completion.
+
+        RefreshSafetyVerification();
+
+        RefreshTraineeProgress();
+    }
+
+    // ==========================================
+    // FIND REFERENCES
+    // ==========================================
+
     private void FindReferences()
     {
         if (trainingSummary == null)
+        {
             trainingSummary =
                 GetComponent<GuidedTrainingSummary>();
+        }
 
         if (engineerTraining == null)
+        {
             engineerTraining =
                 GetComponent<GuidedEngineerCommunication>();
+        }
 
         if (reportingTraining == null)
+        {
             reportingTraining =
                 GetComponent<GuidedInspectionMultipleChoice>();
+        }
+
+        if (Application.isPlaying)
+        {
+            if (taskChecklist == null)
+            {
+                taskChecklist =
+                    FindFirstObjectByType<
+                        InspectionTaskChecklist
+                    >();
+            }
+
+            if (SafetyTraineeAccountManager.Instance != null)
+            {
+                accountManager =
+                    SafetyTraineeAccountManager.Instance;
+            }
+            else if (accountManager == null)
+            {
+                accountManager =
+                    FindFirstObjectByType<
+                        SafetyTraineeAccountManager
+                    >();
+            }
+
+            if (accountManager != null)
+            {
+                SafetyTraineeProgressManager persistentManager =
+                    accountManager.GetComponent<
+                        SafetyTraineeProgressManager
+                    >();
+
+                if (persistentManager != null)
+                    traineeProgressManager = persistentManager;
+            }
+
+            if (traineeProgressManager == null)
+            {
+                traineeProgressManager =
+                    FindFirstObjectByType<
+                        SafetyTraineeProgressManager
+                    >();
+            }
+        }
 
         if (completionPanel == null)
         {
@@ -98,22 +224,93 @@ public class GuidedTrainingCompletion : MonoBehaviour
                     feedback.Find("FinishTrainingButton");
 
                 if (finish != null)
+                {
                     finishButton =
                         finish.GetComponent<Button>();
+                }
             }
         }
 
         if (completionPanel != null)
         {
             Transform label =
-                completionPanel.transform.Find(
-                    "StatusText"
-                );
+                completionPanel.transform.Find("StatusText");
 
             if (label != null)
+            {
                 statusText =
                     label.GetComponent<TMP_Text>();
+            }
+
+            Transform testing =
+                completionPanel.transform.Find(
+                    "StartTestingButton"
+                );
+
+            if (testing != null)
+            {
+                startTestingButton =
+                    testing.GetComponent<Button>();
+
+                startTestingButtonText =
+                    testing.GetComponentInChildren<
+                        TMP_Text
+                    >(true);
+            }
         }
+    }
+
+    // ==========================================
+    // NEW: VERIFY ACTUAL SAFETY COMPLETION
+    // ==========================================
+
+    private bool RefreshSafetyVerification()
+    {
+        safetyPrerequisiteSatisfied =
+            IsValidTraineeSession() &&
+            TraineeSafetySession.IsCompletedFor(
+                sessionTraineeId
+            );
+
+        return safetyPrerequisiteSatisfied;
+    }
+
+    private bool ValidateSafetyPrerequisite()
+    {
+        if (RefreshSafetyVerification())
+            return true;
+
+        Debug.LogWarning(
+            "Safety verification is missing. " +
+            "The trainee must complete PPE training " +
+            "in the Safety Room first."
+        );
+
+        return false;
+    }
+
+    // ==========================================
+    // REFRESH INDIVIDUAL TRAINEE PROGRESS
+    // ==========================================
+
+    private void RefreshTraineeProgress()
+    {
+        if (traineeProgressManager == null)
+            return;
+
+        traineeProgressManager.RefreshProgress();
+
+        successfulTrainingSessions =
+            traineeProgressManager
+                .SuccessfulTrainingSessions;
+
+        requiredTrainingSessions =
+            traineeProgressManager
+                .RequiredTrainingSessions;
+
+        remainingTrainingSessions =
+            traineeProgressManager
+                .RemainingTrainingSessions;
     }
 
     // ==========================================
@@ -168,14 +365,14 @@ public class GuidedTrainingCompletion : MonoBehaviour
         }
 
 #if UNITY_EDITOR
+
         Undo.RegisterFullObjectHierarchyUndo(
             gameObject,
             "Build Training Completion Screen"
         );
+
 #endif
 
-        // Add a dedicated completion button
-        // to the existing feedback screen.
         finishButton = MakeButton(
             feedback,
             "FinishTrainingButton",
@@ -215,6 +412,8 @@ public class GuidedTrainingCompletion : MonoBehaviour
         background.color = Color.white;
         background.raycastTarget = true;
 
+        // PAGE TITLE
+
         MakeText(
             root,
             "PageTitle",
@@ -230,6 +429,8 @@ public class GuidedTrainingCompletion : MonoBehaviour
             new Color32(211, 167, 71, 255),
             0, 234, 730, 3
         );
+
+        // CONGRATULATIONS PANEL
 
         Transform congratulations = MakePanel(
             root,
@@ -266,6 +467,8 @@ public class GuidedTrainingCompletion : MonoBehaviour
             TextAlignmentOptions.Center
         );
 
+        // COMPLETION STATUS
+
         statusText = MakeText(
             root,
             "StatusText",
@@ -274,6 +477,8 @@ public class GuidedTrainingCompletion : MonoBehaviour
             0, -118, 710, 53,
             TextAlignmentOptions.Center
         );
+
+        // NAVIGATION BUTTONS
 
         MakeButton(
             root,
@@ -284,7 +489,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
             paleBlue, navy
         );
 
-        MakeButton(
+        startTestingButton = MakeButton(
             root,
             "StartTestingButton",
             "START TESTING",
@@ -302,20 +507,27 @@ public class GuidedTrainingCompletion : MonoBehaviour
             navy, Color.white
         );
 
+        FindReferences();
+
         completionPanel.transform.SetAsLastSibling();
 
 #if UNITY_EDITOR
+
         if (copyEZPZInteractions)
             ConfigureEZPZInteractions();
+
 #endif
 
         completionPanel.SetActive(false);
 
 #if UNITY_EDITOR
+
         EditorUtility.SetDirty(this);
+
         EditorSceneManager.MarkSceneDirty(
             gameObject.scene
         );
+
 #endif
 
         Debug.Log(
@@ -351,6 +563,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
         SetRect(child, x, y, width, height);
 
         Image image = child.GetComponent<Image>();
+
         image.color = color;
         image.raycastTarget = false;
 
@@ -384,7 +597,8 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
         SetRect(child, x, y, width, height);
 
-        TMP_Text text = child.GetComponent<TMP_Text>();
+        TMP_Text text =
+            child.GetComponent<TMP_Text>();
 
         text.text = content;
         text.fontSize = size;
@@ -430,22 +644,27 @@ public class GuidedTrainingCompletion : MonoBehaviour
         SetRect(child, x, y, width, height);
 
         Image image = child.GetComponent<Image>();
+
         image.color = background;
         image.raycastTarget = true;
 
         Button button = child.GetComponent<Button>();
+
         button.targetGraphic = image;
-        button.transition = Selectable.Transition.None;
+
+        button.transition =
+            Selectable.Transition.None;
 
         BoxCollider collider =
             child.GetComponent<BoxCollider>();
 
         collider.center = Vector3.zero;
+
         collider.size = new Vector3(
             width, height, 4f
         );
 
-        TMP_Text label = MakeText(
+        MakeText(
             child,
             "ButtonText",
             caption,
@@ -459,9 +678,10 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
         if (key == null)
         {
-            key = child.gameObject.AddComponent<
-                TrainingCompletionButton
-            >();
+            key =
+                child.gameObject.AddComponent<
+                    TrainingCompletionButton
+                >();
         }
 
         key.controller = this;
@@ -475,7 +695,11 @@ public class GuidedTrainingCompletion : MonoBehaviour
         float x, float y,
         float width, float height)
     {
-        RectTransform rect = target as RectTransform;
+        RectTransform rect =
+            target as RectTransform;
+
+        if (rect == null)
+            return;
 
         rect.anchorMin = new Vector2(.5f, .5f);
         rect.anchorMax = new Vector2(.5f, .5f);
@@ -500,14 +724,10 @@ public class GuidedTrainingCompletion : MonoBehaviour
         FindReferences();
 
         if (completionPanel != null)
-        {
             ConnectUnder(completionPanel.transform);
-        }
 
         if (finishButton != null)
-        {
             ConnectUnder(finishButton.transform);
-        }
     }
 
     private void ConnectUnder(Transform root)
@@ -517,7 +737,8 @@ public class GuidedTrainingCompletion : MonoBehaviour
                 TrainingCompletionButton
             >(true);
 
-        foreach (TrainingCompletionButton control in controls)
+        foreach (TrainingCompletionButton control
+                 in controls)
         {
             control.controller = this;
 
@@ -537,8 +758,15 @@ public class GuidedTrainingCompletion : MonoBehaviour
         }
     }
 
+    // ==========================================
+    // BUTTON ACTIONS
+    // ==========================================
+
     public void HandleAction(string action)
     {
+        if (!Application.isPlaying || loadingScene)
+            return;
+
         switch (action)
         {
             case "FINISH":
@@ -550,7 +778,11 @@ public class GuidedTrainingCompletion : MonoBehaviour
                 break;
 
             case "TEST":
-                LoadScene(testingModeSceneName);
+                HandleNextTrainingAction();
+                break;
+
+            case "REPEAT":
+                RepeatGuidedTraining();
                 break;
 
             case "EXIT":
@@ -560,14 +792,16 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // COMPLETION VALIDATION
+    // CHECK FEEDBACK SCREEN
     // ==========================================
 
     private bool IsFeedbackScreenVisible()
     {
         if (trainingSummary == null ||
             trainingSummary.summaryPanel == null)
+        {
             return false;
+        }
 
         Transform feedback =
             trainingSummary.summaryPanel.transform.Find(
@@ -577,6 +811,29 @@ public class GuidedTrainingCompletion : MonoBehaviour
         return feedback != null &&
             feedback.gameObject.activeInHierarchy;
     }
+
+    // ==========================================
+    // VALIDATE CURRENT TRAINEE SESSION
+    // ==========================================
+
+    private bool IsValidTraineeSession()
+    {
+        if (accountManager == null ||
+            !accountManager.IsLoggedIn)
+        {
+            return false;
+        }
+
+        if (string.IsNullOrEmpty(sessionTraineeId))
+            return false;
+
+        return accountManager.CurrentTraineeId ==
+               sessionTraineeId;
+    }
+
+    // ==========================================
+    // VALIDATE ALL REQUIRED ACTIVITIES
+    // ==========================================
 
     private bool AllRequiredActivitiesComplete()
     {
@@ -591,13 +848,62 @@ public class GuidedTrainingCompletion : MonoBehaviour
             engineerTraining.HasPreservedEvidence() &&
             engineerTraining.HasUpdatedStatus();
 
-        // The earlier stages are followed sequentially
-        // in the existing guided training flow.
-        return reportDone && communicationDone;
+        bool checklistDone =
+            taskChecklist != null &&
+            taskChecklist.AreAllTasksCompleted();
+
+        // NEW: Include verified PPE completion.
+
+        bool safetyDone =
+            RefreshSafetyVerification();
+
+        return reportDone &&
+               communicationDone &&
+               checklistDone &&
+               safetyDone;
     }
+
+    // ==========================================
+    // INCOMPLETE TRAINING WARNING
+    // ==========================================
+
+    private void ShowIncompleteTrainingWarning()
+    {
+        if (taskChecklist == null)
+        {
+            Debug.LogWarning(
+                "Training checklist is not assigned."
+            );
+
+            return;
+        }
+
+        Debug.LogWarning(
+            "Training cannot be completed yet. " +
+            taskChecklist.GetCompletedTaskCount() +
+            " / " +
+            taskChecklist.GetTotalTaskCount() +
+            " tasks completed (" +
+            taskChecklist.GetProgressPercentage() +
+            "%). Pending task: " +
+            taskChecklist.GetFirstIncompleteTask()
+        );
+    }
+
+    // ==========================================
+    // OPEN FINAL COMPLETION SCREEN
+    // ==========================================
 
     public void OpenCompletionScreen()
     {
+        if (!Application.isPlaying)
+            return;
+
+        if (completed ||
+            sessionRecorded ||
+            processingCompletion)
+            return;
+
         FindReferences();
 
         if (completionPanel == null)
@@ -605,6 +911,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
             Debug.LogError(
                 "Build Training Completion Screen first."
             );
+
             return;
         }
 
@@ -613,24 +920,108 @@ public class GuidedTrainingCompletion : MonoBehaviour
             Debug.LogWarning(
                 "Open the Performance Feedback screen first."
             );
+
+            return;
+        }
+
+        if (!IsValidTraineeSession())
+        {
+            Debug.LogWarning(
+                "Training cannot be saved. " +
+                "The original trainee must remain logged in."
+            );
+
+            return;
+        }
+
+        if (traineeProgressManager == null)
+        {
+            Debug.LogError(
+                "Persistent trainee progress manager " +
+                "could not be found."
+            );
+
+            return;
+        }
+
+        // NEW: Validate actual PPE safety verification.
+
+        if (!ValidateSafetyPrerequisite())
+        {
+            return;
+        }
+
+        // Validate all six checklist tasks.
+
+        if (taskChecklist == null ||
+            !taskChecklist.AreAllTasksCompleted())
+        {
+            ShowIncompleteTrainingWarning();
+
             return;
         }
 
         if (!AllRequiredActivitiesComplete())
         {
             Debug.LogWarning(
-                "The required reporting and " +
-                "engineer communication tasks " +
-                "are not yet complete."
+                "Required reporting, safety or engineering " +
+                "communication activities are incomplete."
             );
+
             return;
         }
 
+        // ==========================================
+        // RECORD INDIVIDUAL TRAINING PROGRESS
+        // ==========================================
+
+        processingCompletion = true;
+
+        bool saved = false;
+
+        try
+        {
+            // NEW: Use actual verified safety status.
+            // No hardcoded true value.
+
+            safetyPrerequisiteSatisfied =
+                TraineeSafetySession.IsCompletedFor(
+                    sessionTraineeId
+                );
+
+            saved =
+                traineeProgressManager
+                    .RecordGuidedTrainingCompletion(
+                        trainingSessionId,
+                        taskChecklist.AreAllTasksCompleted(),
+                        safetyPrerequisiteSatisfied
+                    );
+        }
+        catch (Exception error)
+        {
+            Debug.LogError(
+                "Could not record training session: " +
+                error.Message
+            );
+        }
+        finally
+        {
+            processingCompletion = false;
+        }
+
+        if (!saved)
+        {
+            Debug.LogWarning(
+                "Training completion could not be recorded."
+            );
+
+            return;
+        }
+
+        sessionRecorded = true;
         completed = true;
 
-        // Save a local completion flag.
-        PlayerPrefs.SetInt(completionSaveKey, 1);
-        PlayerPrefs.Save();
+        RefreshTraineeProgress();
 
         if (trainingSummary != null &&
             trainingSummary.summaryPanel != null)
@@ -639,18 +1030,212 @@ public class GuidedTrainingCompletion : MonoBehaviour
         }
 
         completionPanel.SetActive(true);
+
         completionPanel.transform.SetAsLastSibling();
+
+        UpdateCompletionPanel();
+
+        Debug.Log(
+            "Safety training prerequisite verified."
+        );
+
+        Debug.Log(
+            "Guided training session recorded for: " +
+            accountManager.CurrentUsername
+        );
+
+        Debug.Log(
+            "Successful training sessions: " +
+            successfulTrainingSessions +
+            " / " +
+            requiredTrainingSessions
+        );
+
+        Debug.Log(
+            "Remaining training sessions: " +
+            remainingTrainingSessions
+        );
+    }
+
+    // ==========================================
+    // UPDATE CONGRATULATIONS PANEL
+    // ==========================================
+
+    private void UpdateCompletionPanel()
+    {
+        RefreshTraineeProgress();
+
+        bool testingUnlocked =
+            traineeProgressManager != null &&
+            traineeProgressManager.CanAccessTesting;
 
         if (statusText != null)
         {
             statusText.text =
-                "Guided training completion recorded " +
-                "for PIPE_0493.";
+                "6 / 6 tasks completed — 100%\n" +
+                "Training sessions: " +
+                successfulTrainingSessions +
+                " / " +
+                requiredTrainingSessions +
+                "\n" +
+                (
+                    testingUnlocked
+                    ? "Independent Testing unlocked."
+                    : remainingTrainingSessions +
+                      " more training " +
+                      (
+                          remainingTrainingSessions == 1
+                          ? "session required."
+                          : "sessions required."
+                      )
+                );
+
+            statusText.enableAutoSizing = true;
+            statusText.fontSizeMin = 12;
+            statusText.fontSizeMax = 19;
+        }
+
+        // Reuse existing button and EZPZ events.
+
+        if (startTestingButtonText != null)
+        {
+            startTestingButtonText.text =
+                testingUnlocked
+                ? "START TESTING"
+                : "REPEAT TRAINING";
+        }
+    }
+
+    // ==========================================
+    // NEXT TRAINING ACTION
+    // ==========================================
+
+    private void HandleNextTrainingAction()
+    {
+        if (!completed || !sessionRecorded)
+        {
+            Debug.LogWarning(
+                "Complete the current training session first."
+            );
+
+            return;
+        }
+
+        FindReferences();
+
+        if (!IsValidTraineeSession() ||
+            traineeProgressManager == null)
+        {
+            Debug.LogWarning(
+                "A valid trainee session is required."
+            );
+
+            return;
+        }
+
+        if (!ValidateSafetyPrerequisite())
+            return;
+
+        RefreshTraineeProgress();
+
+        if (traineeProgressManager.CanAccessTesting)
+        {
+            StartTestingMode();
+        }
+        else
+        {
+            RepeatGuidedTraining();
+        }
+    }
+
+    // ==========================================
+    // REPEAT GUIDED TRAINING
+    // ==========================================
+
+    public void RepeatGuidedTraining()
+    {
+        if (!Application.isPlaying || loadingScene)
+            return;
+
+        if (!completed || !sessionRecorded)
+        {
+            Debug.LogWarning(
+                "Finish the current training session first."
+            );
+
+            return;
+        }
+
+        FindReferences();
+
+        if (!IsValidTraineeSession())
+        {
+            Debug.LogWarning(
+                "A valid trainee login is required."
+            );
+
+            return;
+        }
+
+        // Verify that the current login session
+        // still has valid PPE completion.
+
+        if (!ValidateSafetyPrerequisite())
+            return;
+
+        // Reload the inspection training scene.
+        // The account, saved progress and verified
+        // safety session remain available.
+
+        string sceneName = guidedTrainingSceneName;
+
+        if (string.IsNullOrWhiteSpace(sceneName))
+        {
+            sceneName =
+                SceneManager.GetActiveScene().name;
+        }
+
+        LoadScene(sceneName);
+    }
+
+    // ==========================================
+    // START INDEPENDENT TESTING
+    // ==========================================
+
+    public void StartTestingMode()
+    {
+        if (!Application.isPlaying || loadingScene)
+            return;
+
+        FindReferences();
+
+        if (!ValidateSafetyPrerequisite())
+            return;
+
+        if (!CanStartTesting())
+        {
+            Debug.LogWarning(
+                "Independent Testing is locked. " +
+                "Complete the required training sessions."
+            );
+
+            if (traineeProgressManager != null)
+            {
+                Debug.Log(
+                    traineeProgressManager
+                        .GetTestingEligibilityMessage()
+                );
+            }
+
+            return;
         }
 
         Debug.Log(
-            "Guided Pipeline Inspection Training completed."
+            "Independent Testing authorised for: " +
+            accountManager.CurrentUsername
         );
+
+        LoadScene(testingModeSceneName);
     }
 
     // ==========================================
@@ -659,42 +1244,126 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
     private void LoadScene(string sceneName)
     {
+        if (loadingScene)
+            return;
+
         if (string.IsNullOrWhiteSpace(sceneName))
         {
             Debug.LogWarning(
                 "Assign the destination scene name " +
                 "in the GuidedTrainingCompletion Inspector."
             );
+
             return;
         }
 
-        if (!Application.CanStreamedLevelBeLoaded(sceneName))
+        if (!Application.CanStreamedLevelBeLoaded(
+            sceneName))
         {
             Debug.LogError(
                 "Scene is not available in Build Profiles: " +
                 sceneName
             );
+
             return;
         }
 
-        SceneManager.LoadScene(sceneName);
+        loadingScene = true;
+
+        try
+        {
+            SceneManager.LoadScene(sceneName);
+        }
+        catch (Exception error)
+        {
+            loadingScene = false;
+
+            Debug.LogError(
+                "Scene loading failed: " +
+                error.Message
+            );
+        }
     }
+
+    // ==========================================
+    // EXIT EXPERIENCE
+    // ==========================================
 
     public void ExitExperience()
     {
 #if UNITY_EDITOR
+
         Debug.Log(
             "Exit VR requested. " +
             "Application.Quit runs in a built application."
         );
+
 #else
+
         Application.Quit();
+
 #endif
     }
 
+    // ==========================================
+    // PUBLIC TRAINING STATUS
+    // ==========================================
+
     public bool IsTrainingCompleted()
     {
-        return completed;
+        return completed && sessionRecorded;
+    }
+
+    public bool HasSavedTrainingCompletion()
+    {
+        FindReferences();
+
+        if (traineeProgressManager == null ||
+            accountManager == null ||
+            !accountManager.IsLoggedIn)
+            return false;
+
+        return traineeProgressManager
+                   .SuccessfulTrainingSessions > 0;
+    }
+
+    public bool CanStartTesting()
+    {
+        if (!Application.isPlaying)
+            return false;
+
+        FindReferences();
+
+        if (!completed || !sessionRecorded)
+            return false;
+
+        if (!IsValidTraineeSession())
+            return false;
+
+        if (!RefreshSafetyVerification())
+            return false;
+
+        if (!AllRequiredActivitiesComplete())
+            return false;
+
+        if (traineeProgressManager == null)
+            return false;
+
+        traineeProgressManager.RefreshProgress();
+
+        return traineeProgressManager.CanAccessTesting;
+    }
+
+    // NEW: Public safety verification status.
+
+    public bool HasVerifiedSafetyCompletion()
+    {
+        if (!Application.isPlaying)
+            return false;
+
+        FindReferences();
+
+        return RefreshSafetyVerification();
     }
 
     // ==========================================
@@ -713,10 +1382,15 @@ public class GuidedTrainingCompletion : MonoBehaviour
             return;
 
         completionPanel.SetActive(true);
+
         completionPanel.transform.SetAsLastSibling();
 
 #if UNITY_EDITOR
-        EditorSceneManager.MarkSceneDirty(gameObject.scene);
+
+        EditorSceneManager.MarkSceneDirty(
+            gameObject.scene
+        );
+
 #endif
     }
 
@@ -730,8 +1404,47 @@ public class GuidedTrainingCompletion : MonoBehaviour
             completionPanel.SetActive(false);
 
 #if UNITY_EDITOR
-        EditorSceneManager.MarkSceneDirty(gameObject.scene);
+
+        EditorSceneManager.MarkSceneDirty(
+            gameObject.scene
+        );
+
 #endif
+    }
+
+    // ==========================================
+    // CHECK CURRENT SAFETY VERIFICATION
+    // ==========================================
+
+    [ContextMenu("Check Safety Verification")]
+    public void CheckSafetyVerification()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning(
+                "Check safety verification during Play Mode."
+            );
+
+            return;
+        }
+
+        FindReferences();
+
+        bool verified = RefreshSafetyVerification();
+
+        Debug.Log(
+            "Current trainee: " +
+            (
+                accountManager != null
+                ? accountManager.CurrentUsername
+                : "Not logged in"
+            )
+        );
+
+        Debug.Log(
+            "Safety prerequisite satisfied: " +
+            verified
+        );
     }
 
     // ==========================================
@@ -751,6 +1464,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
             Debug.LogWarning(
                 "Assign Calculator Key Template first."
             );
+
             return;
         }
 
@@ -773,6 +1487,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
             Debug.LogWarning(
                 "Calculator key has no InteractableGeneral."
             );
+
             return;
         }
 
@@ -791,7 +1506,6 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
         foreach (TrainingCompletionButton key in keys)
         {
-            // Only configure this activity's buttons.
             if (!key.transform.IsChildOf(
                     completionPanel.transform) &&
                 (finishButton == null ||
@@ -857,18 +1571,26 @@ public class GuidedTrainingCompletion : MonoBehaviour
                 if (!iterator.isArray ||
                     !iterator.propertyPath.EndsWith(
                         "m_PersistentCalls.m_Calls"))
+                {
                     continue;
+                }
 
-                for (int i = 0; i < iterator.arraySize; i++)
+                for (int i = 0;
+                     i < iterator.arraySize;
+                     i++)
                 {
                     SerializedProperty call =
                         iterator.GetArrayElementAtIndex(i);
 
                     SerializedProperty target =
-                        call.FindPropertyRelative("m_Target");
+                        call.FindPropertyRelative(
+                            "m_Target"
+                        );
 
                     SerializedProperty method =
-                        call.FindPropertyRelative("m_MethodName");
+                        call.FindPropertyRelative(
+                            "m_MethodName"
+                        );
 
                     if (target == null || method == null)
                         continue;
@@ -886,7 +1608,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
             if (rewired)
             {
                 serialized.ApplyModifiedProperties();
+
                 EditorUtility.SetDirty(interaction);
+
                 connected++;
             }
             else
@@ -914,4 +1638,5 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
 #endif
+
 }

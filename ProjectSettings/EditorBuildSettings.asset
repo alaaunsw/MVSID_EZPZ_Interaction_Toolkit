@@ -18,12 +18,12 @@ EditorBuildSettings:
     path: Assets/MVSID_Project/Scenes/Familiraization room XR.unity
     guid: 0c0ddf81e92408c4aad5bfaef2bc1c7b
   - enabled: 1
-    path: Assets/MVSID_Project/Scenes/Safty Room.unity
+    path: Assets/MVSID_Project/Scenes/Safty Room Training mode.unity
     guid: ababb8bfaddae5645b402269a4fe7abc
-  - enabled: 0
-    path: Assets/MVSID_Project/Scenes/Training Environment 1.unity
+  - enabled: 1
+    path: Assets/MVSID_Project/Scenes/Training Environment.unity
     guid: bf4c6f902c9eb5b44a6cfe6101169649
-  - enabled: 0
+  - enabled: 1
     path: Assets/MVSID_Project/Scenes/Familiraization room.unity
     guid: e1e5839795dffe349a6e5163e80a91af
   m_configObjects:

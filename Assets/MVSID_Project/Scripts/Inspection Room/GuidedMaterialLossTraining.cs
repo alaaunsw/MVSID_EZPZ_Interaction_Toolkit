@@ -8,6 +8,9 @@ public class GuidedMaterialLossTraining : MonoBehaviour
     [Header("Pipe Data")]
     public PipeInspectionTarget pipeTarget;
 
+    [Header("Training Progress Checklist")]
+    public InspectionTaskChecklist taskChecklist;
+
     [Header("Existing Training UI")]
     public TMP_Text stepText;
     public TMP_Text instructionText;
@@ -45,6 +48,9 @@ public class GuidedMaterialLossTraining : MonoBehaviour
     private bool remainingVerified = false;
     private bool thicknessLossVerified = false;
 
+    // NEW: Prevent duplicate checklist completion.
+    private bool pipeInformationTaskCompleted = false;
+
     private float verifiedOriginal;
     private float verifiedRemaining;
     private float verifiedThicknessLoss;
@@ -59,7 +65,10 @@ public class GuidedMaterialLossTraining : MonoBehaviour
     private readonly Color incorrectColor =
         new Color32(190, 55, 55, 255);
 
-    // Automatically connect existing generated UI.
+    // =====================================
+    // CONNECT EXISTING UI
+    // =====================================
+
     private void Awake()
     {
         Transform content =
@@ -75,7 +84,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             return;
         }
 
-        // Step heading
         if (stepText == null)
         {
             Transform found =
@@ -86,7 +94,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                     found.GetComponent<TMP_Text>();
         }
 
-        // Instructions
         if (instructionText == null)
         {
             Transform found =
@@ -97,7 +104,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                     found.GetComponent<TMP_Text>();
         }
 
-        // IMPORTANT: Fixes Step 2 and Step 3 label.
         if (inputLabel == null)
         {
             Transform found =
@@ -108,7 +114,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                     found.GetComponent<TMP_Text>();
         }
 
-        // Answer input
         if (answerInput == null)
         {
             Transform found =
@@ -119,7 +124,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                     found.GetComponent<TMP_InputField>();
         }
 
-        // Feedback
         if (feedbackText == null)
         {
             Transform found =
@@ -130,7 +134,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                     found.GetComponent<TMP_Text>();
         }
 
-        // CHECK ANSWER button
         if (checkAnswerButton == null)
         {
             Transform found =
@@ -140,7 +143,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                 checkAnswerButton = found.gameObject;
         }
 
-        // NEXT STEP button
         if (nextStepButton == null)
         {
             Transform found =
@@ -150,26 +152,27 @@ public class GuidedMaterialLossTraining : MonoBehaviour
 
             if (found == null)
             {
-                found = content.Find("NextStepButton");
+                found =
+                    content.Find("NextStepButton");
             }
 
             if (found != null)
                 nextStepButton = found.gameObject;
         }
 
-        // NEXT STEP button label
         if (nextStepButtonText == null &&
             nextStepButton != null)
         {
             Transform found =
-                nextStepButton.transform.Find("ButtonText");
+                nextStepButton.transform.Find(
+                    "ButtonText"
+                );
 
             if (found != null)
                 nextStepButtonText =
                     found.GetComponent<TMP_Text>();
         }
 
-        // Optional generated workspace elements.
         if (formulaText == null)
         {
             Transform found =
@@ -183,7 +186,9 @@ public class GuidedMaterialLossTraining : MonoBehaviour
         if (originalValueText == null)
         {
             Transform found =
-                content.Find("OriginalThicknessValue");
+                content.Find(
+                    "OriginalThicknessValue"
+                );
 
             if (found != null)
                 originalValueText =
@@ -193,7 +198,9 @@ public class GuidedMaterialLossTraining : MonoBehaviour
         if (remainingValueText == null)
         {
             Transform found =
-                content.Find("RemainingThicknessValue");
+                content.Find(
+                    "RemainingThicknessValue"
+                );
 
             if (found != null)
                 remainingValueText =
@@ -210,12 +217,13 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                     found.GetComponent<TMP_Text>();
         }
 
-        // Calculator may be a sibling of this panel.
         if (calculatorPanel == null &&
             transform.parent != null)
         {
             Transform found =
-                transform.parent.Find("CalculatorPanel");
+                transform.parent.Find(
+                    "CalculatorPanel"
+                );
 
             if (found != null)
                 calculatorPanel = found.gameObject;
@@ -227,6 +235,10 @@ public class GuidedMaterialLossTraining : MonoBehaviour
         ShowStepOne();
     }
 
+    // =====================================
+    // START TRAINING
+    // =====================================
+
     public void ShowStepOne()
     {
         currentStep = 1;
@@ -236,6 +248,9 @@ public class GuidedMaterialLossTraining : MonoBehaviour
         originalVerified = false;
         remainingVerified = false;
         thicknessLossVerified = false;
+
+        // NEW: Reset local completion tracking.
+        pipeInformationTaskCompleted = false;
 
         verifiedOriginal = 0f;
         verifiedRemaining = 0f;
@@ -247,6 +262,10 @@ public class GuidedMaterialLossTraining : MonoBehaviour
 
         ShowCurrentStep();
     }
+
+    // =====================================
+    // GET PIPE DATA
+    // =====================================
 
     private PipeInspectionData GetData()
     {
@@ -274,6 +293,10 @@ public class GuidedMaterialLossTraining : MonoBehaviour
         return data;
     }
 
+    // =====================================
+    // DISPLAY CURRENT STEP
+    // =====================================
+
     private void ShowCurrentStep()
     {
         currentStepComplete = false;
@@ -297,22 +320,21 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             answerInput.interactable = true;
         }
 
-        // Show CHECK ANSWER.
         if (checkAnswerButton != null)
             checkAnswerButton.SetActive(true);
 
-        // Hide NEXT STEP.
         if (nextStepButton != null)
             nextStepButton.SetActive(false);
 
-        // Calculator is only needed for Steps 3 and 4.
+        // Calculator only needed for Steps 3 and 4.
+
         if (calculatorPanel != null)
         {
             calculatorPanel.SetActive(
-                currentStep == 3 || currentStep == 4
+                currentStep == 3 ||
+                currentStep == 4
             );
 
-            // Clear previous calculator entries.
             if (calculatorPanel.activeSelf)
             {
                 MaterialLossCalculator calculator =
@@ -330,6 +352,7 @@ public class GuidedMaterialLossTraining : MonoBehaviour
         switch (currentStep)
         {
             case 1:
+
                 SetInstruction(
                     "Open the " + pipeID +
                     " information card.\n\n" +
@@ -349,6 +372,7 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                 break;
 
             case 2:
+
                 SetInstruction(
                     "Return to the " + pipeID +
                     " information card.\n\n" +
@@ -368,6 +392,7 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                 break;
 
             case 3:
+
                 SetInstruction(
                     "Calculate the thickness lost " +
                     "due to corrosion.\n\n" +
@@ -379,7 +404,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                     "THICKNESS LOSS (mm)"
                 );
 
-                // Formula only: no numeric answers.
                 SetFormula(
                     "THICKNESS LOSS FORMULA\n\n" +
                     "Thickness Loss = Original Thickness " +
@@ -389,6 +413,7 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                 break;
 
             case 4:
+
                 SetInstruction(
                     "Calculate the percentage of " +
                     "original wall thickness lost.\n\n" +
@@ -401,7 +426,6 @@ public class GuidedMaterialLossTraining : MonoBehaviour
                     "MATERIAL LOSS (%)"
                 );
 
-                // Formula only: no numeric answers.
                 SetFormula(
                     "MATERIAL LOSS FORMULA\n\n" +
                     "Material Loss (%) = " +
@@ -417,6 +441,10 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             normalColor
         );
     }
+
+    // =====================================
+    // VERIFIED MEASUREMENTS
+    // =====================================
 
     private void UpdateVerifiedMeasurements()
     {
@@ -443,14 +471,20 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             thicknessLossValueText.text =
                 thicknessLossVerified
                 ? "Thickness Loss\n" +
-                  verifiedThicknessLoss.ToString("F2") + " mm"
+                  verifiedThicknessLoss.ToString("F2") +
+                  " mm"
                 : "Thickness Loss\nNot calculated";
         }
     }
 
+    // =====================================
+    // CHECK ANSWER
+    // =====================================
+
     public void CheckAnswer()
     {
-        if (trainingComplete || currentStepComplete)
+        if (trainingComplete ||
+            currentStepComplete)
             return;
 
         PipeInspectionData data = GetData();
@@ -517,71 +551,102 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             (thicknessLoss / original) * 100f;
 
         float correctAnswer;
+
         string unit = "mm";
         string hint;
 
         switch (currentStep)
         {
             case 1:
+
                 correctAnswer = original;
+
                 hint =
                     "Check Original Wall Thickness " +
                     "on the pipe information card.";
+
                 break;
 
             case 2:
+
                 correctAnswer = remaining;
+
                 hint =
                     "Check Remaining Wall Thickness " +
                     "on the pipe information card.";
+
                 break;
 
             case 3:
+
                 correctAnswer = thicknessLoss;
+
                 hint =
                     "Use Original Thickness minus " +
                     "Remaining Thickness.";
+
                 break;
 
             case 4:
+
                 correctAnswer = percentageLoss;
+
                 unit = "%";
+
                 hint =
                     "Divide Thickness Loss by Original " +
                     "Thickness, then multiply by 100.";
+
                 break;
 
             default:
+
                 return;
         }
 
         float difference =
-            Mathf.Abs(traineeAnswer - correctAnswer);
+            Mathf.Abs(
+                traineeAnswer - correctAnswer
+            );
 
         if (difference <= tolerance)
         {
             currentStepComplete = true;
 
             // Save verified trainee answers.
+
             switch (currentStep)
             {
                 case 1:
+
                     verifiedOriginal = traineeAnswer;
                     originalVerified = true;
+
                     break;
 
                 case 2:
+
                     verifiedRemaining = traineeAnswer;
                     remainingVerified = true;
+
+                    // NEW: Complete the second task
+                    // after both measurements are verified.
+
+                    CompletePipeInformationTask();
+
                     break;
 
                 case 3:
+
                     verifiedThicknessLoss = traineeAnswer;
                     thicknessLossVerified = true;
+
                     break;
 
                 case 4:
+
                     verifiedPercentage = traineeAnswer;
+
                     break;
             }
 
@@ -597,11 +662,9 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             if (answerInput != null)
                 answerInput.interactable = false;
 
-            // Hide CHECK ANSWER.
             if (checkAnswerButton != null)
                 checkAnswerButton.SetActive(false);
 
-            // Show NEXT STEP.
             if (nextStepButton != null)
                 nextStepButton.SetActive(true);
 
@@ -627,14 +690,60 @@ public class GuidedMaterialLossTraining : MonoBehaviour
         }
     }
 
+    // =====================================
+    // NEW: CONNECT CHECKLIST TASK 2
+    // =====================================
+
+    private void CompletePipeInformationTask()
+    {
+        if (pipeInformationTaskCompleted)
+            return;
+
+        if (!originalVerified ||
+            !remainingVerified)
+            return;
+
+        if (taskChecklist == null)
+        {
+            taskChecklist =
+                FindFirstObjectByType<
+                    InspectionTaskChecklist
+                >();
+        }
+
+        if (taskChecklist == null)
+        {
+            Debug.LogWarning(
+                "Inspection Task Checklist not assigned."
+            );
+
+            return;
+        }
+
+        taskChecklist.CompleteTask1();
+
+        pipeInformationTaskCompleted = true;
+
+        Debug.Log(
+            "Training Checklist: " +
+            "Read pipe information completed."
+        );
+    }
+
+    // =====================================
+    // NEXT STEP
+    // =====================================
+
     public void NextStep()
     {
-        if (!currentStepComplete || trainingComplete)
+        if (!currentStepComplete ||
+            trainingComplete)
             return;
 
         if (currentStep < 4)
         {
             currentStep++;
+
             ShowCurrentStep();
         }
         else
@@ -642,6 +751,10 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             CompleteTraining();
         }
     }
+
+    // =====================================
+    // COMPLETE MATERIAL LOSS TRAINING
+    // =====================================
 
     private void CompleteTraining()
     {
@@ -687,8 +800,10 @@ public class GuidedMaterialLossTraining : MonoBehaviour
         );
     }
 
-    // Receives calculated result from the calculator.
-    // The trainee must still press CHECK ANSWER.
+    // =====================================
+    // RECEIVE CALCULATOR RESULT
+    // =====================================
+
     public void SetCalculatorResult(string result)
     {
         if (answerInput == null ||
@@ -696,7 +811,8 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             trainingComplete)
             return;
 
-        if (currentStep != 3 && currentStep != 4)
+        if (currentStep != 3 &&
+            currentStep != 4)
             return;
 
         answerInput.text = result;
@@ -707,6 +823,10 @@ public class GuidedMaterialLossTraining : MonoBehaviour
             normalColor
         );
     }
+
+    // =====================================
+    // UI HELPERS
+    // =====================================
 
     private void SetInstruction(string message)
     {

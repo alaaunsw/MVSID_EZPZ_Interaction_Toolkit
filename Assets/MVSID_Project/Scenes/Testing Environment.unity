@@ -6452,6 +6452,7 @@ MonoBehaviour:
   materialLossTraining: {fileID: 395923267}
   materialLossPanel: {fileID: 395923265}
   conditionPanel: {fileID: 1336101136}
+  taskChecklist: {fileID: 715079298}
   openAfterCalculation: 1
   transitionDelay: 2
 --- !u!114 &142977839
@@ -6524,6 +6525,7 @@ MonoBehaviour:
   materialLossTraining: {fileID: 395923267}
   conditionTrainingPanel: {fileID: 1336101136}
   multipleChoicePanel: {fileID: 511796846}
+  taskChecklist: {fileID: 715079298}
   openAfterConditionTraining: 1
   calculatorKeyTemplate: {fileID: 106172007}
   copyEZPZInteractions: 1
@@ -6542,6 +6544,7 @@ MonoBehaviour:
   reporting: {fileID: 142977842}
   communicationPanel: {fileID: 257930551}
   openAfterReportSubmission: 1
+  taskChecklist: {fileID: 715079298}
   calculatorKeyTemplate: {fileID: 106172007}
   copyEZPZInteractions: 1
 --- !u!114 &142977844
@@ -6559,6 +6562,7 @@ MonoBehaviour:
   engineerTraining: {fileID: 142977843}
   reportingTraining: {fileID: 142977842}
   summaryPanel: {fileID: 1211131130}
+  taskChecklist: {fileID: 715079298}
   openAfterEngineerCommunication: 1
   mainMenuSceneName: 
   calculatorKeyTemplate: {fileID: 106172007}
@@ -6578,6 +6582,7 @@ MonoBehaviour:
   trainingSummary: {fileID: 142977844}
   engineerTraining: {fileID: 142977843}
   reportingTraining: {fileID: 142977842}
+  taskChecklist: {fileID: 715079298}
   completionPanel: {fileID: 2135745417}
   mainMenuSceneName: 
   testingModeSceneName: 
@@ -16655,6 +16660,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GuidedMaterialLossTraining
   pipeTarget: {fileID: 475929659}
+  taskChecklist: {fileID: 715079298}
   stepText: {fileID: 400070560}
   instructionText: {fileID: 2105444830}
   inputLabel: {fileID: 709816471}
