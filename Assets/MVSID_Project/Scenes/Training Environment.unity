@@ -6583,10 +6583,19 @@ MonoBehaviour:
   engineerTraining: {fileID: 142977843}
   reportingTraining: {fileID: 142977842}
   taskChecklist: {fileID: 715079298}
+  traineeProgressManager: {fileID: 0}
+  accountManager: {fileID: 0}
+  trainingSessionId: 
+  sessionTraineeId: 
+  sessionRecorded: 0
+  successfulTrainingSessions: 0
+  requiredTrainingSessions: 0
+  remainingTrainingSessions: 0
+  safetyPrerequisiteSatisfied: 0
   completionPanel: {fileID: 2135745417}
-  mainMenuSceneName: 
-  testingModeSceneName: 
-  completionSaveKey: PIPE_0493_GuidedTrainingComplete
+  mainMenuSceneName: Safty Room Training mode
+  testingModeSceneName: Safty Room Testing mode
+  guidedTrainingSceneName: Training Environment
   calculatorKeyTemplate: {fileID: 106172007}
   copyEZPZInteractions: 1
 --- !u!114 &142977846

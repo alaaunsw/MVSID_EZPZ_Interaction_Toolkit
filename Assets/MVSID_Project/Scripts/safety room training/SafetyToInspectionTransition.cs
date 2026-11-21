@@ -5,20 +5,32 @@ using UnityEngine.SceneManagement;
 public class SafetyToInspectionTransition : MonoBehaviour
 {
     [Header("Destination Scenes")]
-    public string trainingSceneName = "Training Environment 1";
-    public string testingSceneName = "";
+    public string trainingSceneName = "Training Environment";
+    public string testingSceneName = "Testing Environment";
 
     private bool isLoading;
+
+    // ==========================================
+    // ENTER TRAINING MODE
+    // ==========================================
 
     public void EnterTrainingMode()
     {
         LoadScene(trainingSceneName);
     }
 
+    // ==========================================
+    // ENTER TESTING MODE
+    // ==========================================
+
     public void EnterTestingMode()
     {
         LoadScene(testingSceneName);
     }
+
+    // ==========================================
+    // LOAD SELECTED SCENE
+    // ==========================================
 
     private void LoadScene(string sceneName)
     {
@@ -27,7 +39,10 @@ public class SafetyToInspectionTransition : MonoBehaviour
 
         if (string.IsNullOrWhiteSpace(sceneName))
         {
-            Debug.LogWarning("Scene name is not assigned.");
+            Debug.LogWarning(
+                "Scene name is not assigned."
+            );
+
             return;
         }
 
@@ -37,12 +52,15 @@ public class SafetyToInspectionTransition : MonoBehaviour
                 "Scene is missing from Build Profiles: " +
                 sceneName
             );
+
             return;
         }
 
         isLoading = true;
 
-        Debug.Log("Entering: " + sceneName);
+        Debug.Log(
+            "Entering: " + sceneName
+        );
 
         SceneManager.LoadScene(sceneName);
     }

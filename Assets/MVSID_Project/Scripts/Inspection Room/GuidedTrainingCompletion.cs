@@ -39,13 +39,20 @@ public class GuidedTrainingCompletion : MonoBehaviour
     [Header("Generated Completion Panel")]
     public GameObject completionPanel;
 
+    // ==========================================
+    // UPDATED SCENE NAMES
+    // ==========================================
+
     [Header("Scene Navigation")]
-    public string mainMenuSceneName = "";
-    public string testingModeSceneName = "";
+    public string mainMenuSceneName =
+        "Safty Room Training mode";
+
+    public string testingModeSceneName =
+        "Safty Room Testing mode";
 
     [Header("Repeat Training")]
     public string guidedTrainingSceneName =
-        "Training Environment 1";
+        "Training Environment";
 
     [Header("EZPZ Interaction")]
     public MaterialLossCalculatorKey calculatorKeyTemplate;
@@ -97,7 +104,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // BEGIN A UNIQUE TRAINING SESSION
+    // BEGIN UNIQUE TRAINING SESSION
     // ==========================================
 
     private void BeginTrainingSession()
@@ -126,10 +133,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
             );
         }
 
-        // NEW: Check verified Safety Room completion.
-
         RefreshSafetyVerification();
-
         RefreshTraineeProgress();
     }
 
@@ -182,13 +186,13 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
             if (accountManager != null)
             {
-                SafetyTraineeProgressManager persistentManager =
+                SafetyTraineeProgressManager manager =
                     accountManager.GetComponent<
                         SafetyTraineeProgressManager
                     >();
 
-                if (persistentManager != null)
-                    traineeProgressManager = persistentManager;
+                if (manager != null)
+                    traineeProgressManager = manager;
             }
 
             if (traineeProgressManager == null)
@@ -221,7 +225,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
             if (feedback != null)
             {
                 Transform finish =
-                    feedback.Find("FinishTrainingButton");
+                    feedback.Find(
+                        "FinishTrainingButton"
+                    );
 
                 if (finish != null)
                 {
@@ -234,7 +240,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
         if (completionPanel != null)
         {
             Transform label =
-                completionPanel.transform.Find("StatusText");
+                completionPanel.transform.Find(
+                    "StatusText"
+                );
 
             if (label != null)
             {
@@ -261,7 +269,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // NEW: VERIFY ACTUAL SAFETY COMPLETION
+    // VERIFY PPE SAFETY TRAINING
     // ==========================================
 
     private bool RefreshSafetyVerification()
@@ -290,7 +298,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // REFRESH INDIVIDUAL TRAINEE PROGRESS
+    // REFRESH INDIVIDUAL PROGRESS
     // ==========================================
 
     private void RefreshTraineeProgress()
@@ -314,7 +322,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // BUILD IN EDIT MODE
+    // BUILD COMPLETION SCREEN
     // ==========================================
 
     [ContextMenu("Build Training Completion Screen")]
@@ -325,6 +333,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
             Debug.LogWarning(
                 "Stop Play Mode before building."
             );
+
             return;
         }
 
@@ -339,6 +348,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
                 "Attach GuidedTrainingCompletion to " +
                 "MaterialLossTrainingCanvas."
             );
+
             return;
         }
 
@@ -348,6 +358,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
             Debug.LogError(
                 "Build GuidedTrainingSummary first."
             );
+
             return;
         }
 
@@ -361,6 +372,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
             Debug.LogError(
                 "FeedbackScreen was not found."
             );
+
             return;
         }
 
@@ -394,7 +406,10 @@ public class GuidedTrainingCompletion : MonoBehaviour
                 typeof(Image)
             );
 
-            obj.transform.SetParent(transform, false);
+            obj.transform.SetParent(
+                transform, false
+            );
+
             completionPanel = obj;
         }
         else
@@ -412,7 +427,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
         background.color = Color.white;
         background.raycastTarget = true;
 
-        // PAGE TITLE
+        // ==========================================
+        // TITLE
+        // ==========================================
 
         MakeText(
             root,
@@ -430,7 +447,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
             0, 234, 730, 3
         );
 
-        // CONGRATULATIONS PANEL
+        // ==========================================
+        // CONGRATULATIONS
+        // ==========================================
 
         Transform congratulations = MakePanel(
             root,
@@ -467,7 +486,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
             TextAlignmentOptions.Center
         );
 
-        // COMPLETION STATUS
+        // ==========================================
+        // TRAINING STATUS
+        // ==========================================
 
         statusText = MakeText(
             root,
@@ -478,7 +499,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
             TextAlignmentOptions.Center
         );
 
+        // ==========================================
         // NAVIGATION BUTTONS
+        // ==========================================
 
         MakeButton(
             root,
@@ -536,15 +559,17 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // UI CREATION
+    // UI CREATION HELPERS
     // ==========================================
 
     private Transform MakePanel(
         Transform parent,
         string name,
         Color color,
-        float x, float y,
-        float width, float height)
+        float x,
+        float y,
+        float width,
+        float height)
     {
         Transform child = parent.Find(name);
 
@@ -577,8 +602,10 @@ public class GuidedTrainingCompletion : MonoBehaviour
         int size,
         Color color,
         FontStyles style,
-        float x, float y,
-        float width, float height,
+        float x,
+        float y,
+        float width,
+        float height,
         TextAlignmentOptions alignment)
     {
         Transform child = parent.Find(name);
@@ -620,8 +647,10 @@ public class GuidedTrainingCompletion : MonoBehaviour
         string name,
         string caption,
         string action,
-        float x, float y,
-        float width, float height,
+        float x,
+        float y,
+        float width,
+        float height,
         Color background,
         Color foreground)
     {
@@ -643,12 +672,14 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
         SetRect(child, x, y, width, height);
 
-        Image image = child.GetComponent<Image>();
+        Image image =
+            child.GetComponent<Image>();
 
         image.color = background;
         image.raycastTarget = true;
 
-        Button button = child.GetComponent<Button>();
+        Button button =
+            child.GetComponent<Button>();
 
         button.targetGraphic = image;
 
@@ -658,18 +689,23 @@ public class GuidedTrainingCompletion : MonoBehaviour
         BoxCollider collider =
             child.GetComponent<BoxCollider>();
 
-        collider.center = Vector3.zero;
+        if (collider != null)
+        {
+            collider.center = Vector3.zero;
 
-        collider.size = new Vector3(
-            width, height, 4f
-        );
+            collider.size = new Vector3(
+                width, height, 4f
+            );
+        }
 
         MakeText(
             child,
             "ButtonText",
             caption,
             19, foreground, FontStyles.Bold,
-            0, 0, width - 12, height - 8,
+            0, 0,
+            width - 12,
+            height - 8,
             TextAlignmentOptions.Center
         );
 
@@ -692,8 +728,10 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
     private void SetRect(
         Transform target,
-        float x, float y,
-        float width, float height)
+        float x,
+        float y,
+        float width,
+        float height)
     {
         RectTransform rect =
             target as RectTransform;
@@ -716,7 +754,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // CONNECT UNITY UI
+    // CONNECT UNITY UI BUTTONS
     // ==========================================
 
     private void ConnectButtons()
@@ -724,10 +762,18 @@ public class GuidedTrainingCompletion : MonoBehaviour
         FindReferences();
 
         if (completionPanel != null)
-            ConnectUnder(completionPanel.transform);
+        {
+            ConnectUnder(
+                completionPanel.transform
+            );
+        }
 
         if (finishButton != null)
-            ConnectUnder(finishButton.transform);
+        {
+            ConnectUnder(
+                finishButton.transform
+            );
+        }
     }
 
     private void ConnectUnder(Transform root)
@@ -813,7 +859,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // VALIDATE CURRENT TRAINEE SESSION
+    // VALIDATE CURRENT TRAINEE
     // ==========================================
 
     private bool IsValidTraineeSession()
@@ -832,7 +878,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // VALIDATE ALL REQUIRED ACTIVITIES
+    // VALIDATE TRAINING ACTIVITIES
     // ==========================================
 
     private bool AllRequiredActivitiesComplete()
@@ -851,8 +897,6 @@ public class GuidedTrainingCompletion : MonoBehaviour
         bool checklistDone =
             taskChecklist != null &&
             taskChecklist.AreAllTasksCompleted();
-
-        // NEW: Include verified PPE completion.
 
         bool safetyDone =
             RefreshSafetyVerification();
@@ -891,7 +935,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // OPEN FINAL COMPLETION SCREEN
+    // COMPLETE TRAINING
     // ==========================================
 
     public void OpenCompletionScreen()
@@ -902,7 +946,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
         if (completed ||
             sessionRecorded ||
             processingCompletion)
+        {
             return;
+        }
 
         FindReferences();
 
@@ -944,35 +990,29 @@ public class GuidedTrainingCompletion : MonoBehaviour
             return;
         }
 
-        // NEW: Validate actual PPE safety verification.
-
         if (!ValidateSafetyPrerequisite())
-        {
             return;
-        }
-
-        // Validate all six checklist tasks.
 
         if (taskChecklist == null ||
             !taskChecklist.AreAllTasksCompleted())
         {
             ShowIncompleteTrainingWarning();
-
             return;
         }
 
         if (!AllRequiredActivitiesComplete())
         {
             Debug.LogWarning(
-                "Required reporting, safety or engineering " +
-                "communication activities are incomplete."
+                "Required reporting, safety or " +
+                "engineering communication activities " +
+                "are incomplete."
             );
 
             return;
         }
 
         // ==========================================
-        // RECORD INDIVIDUAL TRAINING PROGRESS
+        // SAVE INDIVIDUAL TRAINING PROGRESS
         // ==========================================
 
         processingCompletion = true;
@@ -981,9 +1021,6 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
         try
         {
-            // NEW: Use actual verified safety status.
-            // No hardcoded true value.
-
             safetyPrerequisiteSatisfied =
                 TraineeSafetySession.IsCompletedFor(
                     sessionTraineeId
@@ -1026,11 +1063,11 @@ public class GuidedTrainingCompletion : MonoBehaviour
         if (trainingSummary != null &&
             trainingSummary.summaryPanel != null)
         {
-            trainingSummary.summaryPanel.SetActive(false);
+            trainingSummary.summaryPanel
+                .SetActive(false);
         }
 
         completionPanel.SetActive(true);
-
         completionPanel.transform.SetAsLastSibling();
 
         UpdateCompletionPanel();
@@ -1095,8 +1132,6 @@ public class GuidedTrainingCompletion : MonoBehaviour
             statusText.fontSizeMax = 19;
         }
 
-        // Reuse existing button and EZPZ events.
-
         if (startTestingButtonText != null)
         {
             startTestingButtonText.text =
@@ -1107,7 +1142,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // NEXT TRAINING ACTION
+    // HANDLE NEXT ACTION
     // ==========================================
 
     private void HandleNextTrainingAction()
@@ -1177,15 +1212,8 @@ public class GuidedTrainingCompletion : MonoBehaviour
             return;
         }
 
-        // Verify that the current login session
-        // still has valid PPE completion.
-
         if (!ValidateSafetyPrerequisite())
             return;
-
-        // Reload the inspection training scene.
-        // The account, saved progress and verified
-        // safety session remain available.
 
         string sceneName = guidedTrainingSceneName;
 
@@ -1199,7 +1227,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // START INDEPENDENT TESTING
+    // START TESTING MODE
     // ==========================================
 
     public void StartTestingMode()
@@ -1235,11 +1263,16 @@ public class GuidedTrainingCompletion : MonoBehaviour
             accountManager.CurrentUsername
         );
 
+        // UPDATED:
+        // Send trainee to the separate Testing
+        // Safety Room, not directly into Testing
+        // Environment.
+
         LoadScene(testingModeSceneName);
     }
 
     // ==========================================
-    // SCENE NAVIGATION
+    // LOAD SCENE
     // ==========================================
 
     private void LoadScene(string sceneName)
@@ -1272,6 +1305,10 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
         try
         {
+            Debug.Log(
+                "Loading scene: " + sceneName
+            );
+
             SceneManager.LoadScene(sceneName);
         }
         catch (Exception error)
@@ -1321,7 +1358,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
         if (traineeProgressManager == null ||
             accountManager == null ||
             !accountManager.IsLoggedIn)
+        {
             return false;
+        }
 
         return traineeProgressManager
                    .SuccessfulTrainingSessions > 0;
@@ -1354,8 +1393,6 @@ public class GuidedTrainingCompletion : MonoBehaviour
         return traineeProgressManager.CanAccessTesting;
     }
 
-    // NEW: Public safety verification status.
-
     public bool HasVerifiedSafetyCompletion()
     {
         if (!Application.isPlaying)
@@ -1382,7 +1419,6 @@ public class GuidedTrainingCompletion : MonoBehaviour
             return;
 
         completionPanel.SetActive(true);
-
         completionPanel.transform.SetAsLastSibling();
 
 #if UNITY_EDITOR
@@ -1401,7 +1437,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
             return;
 
         if (completionPanel != null)
+        {
             completionPanel.SetActive(false);
+        }
 
 #if UNITY_EDITOR
 
@@ -1413,7 +1451,7 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
     // ==========================================
-    // CHECK CURRENT SAFETY VERIFICATION
+    // CHECK SAFETY VERIFICATION
     // ==========================================
 
     [ContextMenu("Check Safety Verification")]
@@ -1430,7 +1468,8 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
         FindReferences();
 
-        bool verified = RefreshSafetyVerification();
+        bool verified =
+            RefreshSafetyVerification();
 
         Debug.Log(
             "Current trainee: " +
@@ -1530,7 +1569,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
 
             if (interaction == null)
             {
-                ComponentUtility.CopyComponent(donor);
+                ComponentUtility.CopyComponent(
+                    donor
+                );
 
                 if (!ComponentUtility.PasteComponentAsNew(
                     key.gameObject))
@@ -1592,14 +1633,21 @@ public class GuidedTrainingCompletion : MonoBehaviour
                             "m_MethodName"
                         );
 
-                    if (target == null || method == null)
+                    if (target == null ||
+                        method == null)
+                    {
                         continue;
+                    }
 
                     if (target.objectReferenceValue ==
                         calculatorKeyTemplate)
                     {
-                        target.objectReferenceValue = key;
-                        method.stringValue = "Activate";
+                        target.objectReferenceValue =
+                            key;
+
+                        method.stringValue =
+                            "Activate";
+
                         rewired = true;
                     }
                 }
@@ -1609,7 +1657,9 @@ public class GuidedTrainingCompletion : MonoBehaviour
             {
                 serialized.ApplyModifiedProperties();
 
-                EditorUtility.SetDirty(interaction);
+                EditorUtility.SetDirty(
+                    interaction
+                );
 
                 connected++;
             }
@@ -1638,5 +1688,4 @@ public class GuidedTrainingCompletion : MonoBehaviour
     }
 
 #endif
-
 }

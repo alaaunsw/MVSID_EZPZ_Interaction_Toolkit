@@ -17227,8 +17227,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4107eb0a54eef2f4cbdfbf620e3f32db, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SafetyToInspectionTransition
-  trainingSceneName: Training Environment 1
-  testingSceneName: 
+  trainingSceneName: Training Environment
+  testingSceneName: Testing Environment
 --- !u!1001 &1389916466
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -23225,6 +23225,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyTraineeAccountManager
   currentUsername: 
   currentTraineeId: 
+  safetyTrainingVerified: 0
 --- !u!4 &2037101573
 Transform:
   m_ObjectHideFlags: 0
