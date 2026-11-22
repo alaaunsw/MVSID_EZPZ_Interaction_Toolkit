@@ -379,22 +379,4 @@ public class TestingPPEQuestionPanelBuilder : MonoBehaviour
     }
 }
 
-// ==========================================
-// INDIVIDUAL ANSWER BUTTON
-// ==========================================
 
-public class TestingPPEAnswerButton : MonoBehaviour
-{
-    public TestingPPEAssessmentManager assessmentManager;
-
-    [Range(0, 3)]
-    public int answerIndex;
-
-    public void Activate()
-    {
-        if (assessmentManager == null)
-            return;
-
-        assessmentManager.SelectAnswer(answerIndex);
-    }
-}
