@@ -34,7 +34,8 @@ public class TestingInspectionDialogue : MonoBehaviour
         if (dialogueText != null)
         {
             dialogueText.text = "";
-            dialogueText.maxVisibleCharacters = int.MaxValue;
+            dialogueText.maxVisibleCharacters =
+                int.MaxValue;
         }
 
         if (audioSource != null)
@@ -49,6 +50,10 @@ public class TestingInspectionDialogue : MonoBehaviour
             ShowOpeningMessage();
         }
     }
+
+    // ======================================
+    // TASK 1 - OPENING
+    // ======================================
 
     public void ShowOpeningMessage()
     {
@@ -80,6 +85,10 @@ public class TestingInspectionDialogue : MonoBehaviour
         );
     }
 
+    // ======================================
+    // TASK 2 - VISUAL INSPECTION
+    // ======================================
+
     public void ShowRotationInstruction()
     {
         ShowMessage(
@@ -91,8 +100,6 @@ public class TestingInspectionDialogue : MonoBehaviour
         );
     }
 
-    // NEW: Appears after the trainee finishes
-    // examining the close-up pipeline model.
     public void ShowVisualInspectionQuestion()
     {
         ShowMessage(
@@ -102,6 +109,10 @@ public class TestingInspectionDialogue : MonoBehaviour
             "Please submit your inspection findings."
         );
     }
+
+    // ======================================
+    // TASK 3 - MATERIAL LOSS CALCULATION
+    // ======================================
 
     public void ShowCalculationMessage()
     {
@@ -113,6 +124,10 @@ public class TestingInspectionDialogue : MonoBehaviour
         );
     }
 
+    // ======================================
+    // TASK 4 - INITIAL ENGINEER REPORT
+    // ======================================
+
     public void ShowEngineerMessage()
     {
         ShowMessage(
@@ -122,6 +137,28 @@ public class TestingInspectionDialogue : MonoBehaviour
             "the available instruments."
         );
     }
+
+    // ======================================
+    // TASK 5 - INSTRUMENT INSPECTION
+    // NEW METHOD
+    // ======================================
+
+    public void ShowInstrumentInstruction()
+    {
+        ShowMessage(
+            "INSPECTION ENGINEER",
+            "Now check the pipeline measurements. " +
+            "Touch the PRESSURE GAUGE to activate it " +
+            "and reveal the pressure reading. " +
+            "Then touch the TEMPERATURE GAUGE " +
+            "to reveal the temperature reading. " +
+            "Record both values and submit your findings."
+        );
+    }
+
+    // ======================================
+    // MAIN DIALOGUE SYSTEM
+    // ======================================
 
     public void ShowMessage(string speaker, string message)
     {
@@ -136,7 +173,8 @@ public class TestingInspectionDialogue : MonoBehaviour
         if (dialogueText == null)
         {
             Debug.LogWarning(
-                "TestingInspectionDialogue: Dialogue Text is not assigned."
+                "TestingInspectionDialogue: " +
+                "Dialogue Text is not assigned."
             );
             return;
         }
@@ -158,7 +196,8 @@ public class TestingInspectionDialogue : MonoBehaviour
         dialogueText.text = prefix + message;
         dialogueText.ForceMeshUpdate();
 
-        int prefixCharacters = speaker.Length + 2;
+        int prefixCharacters =
+            speaker.Length + 2;
 
         dialogueText.maxVisibleCharacters =
             prefixCharacters;
@@ -200,9 +239,14 @@ public class TestingInspectionDialogue : MonoBehaviour
         activeMessage = null;
     }
 
+    // ======================================
+    // TYPING AUDIO
+    // ======================================
+
     private void StartContinuousTypingAudio()
     {
-        if (audioSource == null || typingSound == null)
+        if (audioSource == null ||
+            typingSound == null)
             return;
 
         audioSource.Stop();
@@ -215,7 +259,8 @@ public class TestingInspectionDialogue : MonoBehaviour
 
     private void PlaySingleTypingClick()
     {
-        if (audioSource == null || typingSound == null)
+        if (audioSource == null ||
+            typingSound == null)
             return;
 
         audioSource.Stop();

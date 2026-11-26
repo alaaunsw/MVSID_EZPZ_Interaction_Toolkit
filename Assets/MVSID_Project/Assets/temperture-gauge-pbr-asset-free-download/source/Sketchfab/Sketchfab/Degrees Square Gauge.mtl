@@ -1,0 +1,63 @@
+# Blender MTL File: 'Degrees Square Gauge.blend'
+# Material Count: 5
+
+newmtl Battered
+Ns 900.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Textures\\metal textures\\Metal_PBR_Substance_Materials\\steel\\TexturesCom_Metal_SteelBattered_1K_normal.tif
+map_Kd C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Textures\\metal textures\\Metal_PBR_Substance_Materials\\steel\\TexturesCom_Metal_SteelBattered_1K_albedo.tif
+refl C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Textures\\metal textures\\Metal_PBR_Substance_Materials\\steel\\TexturesCom_Metal_SteelBattered_1K_metallic.tif
+
+newmtl Material
+Ns 138.329663
+Ka 1.000000 1.000000 1.000000
+Kd 0.031896 0.038204 0.043735
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Gauge model\\Degrees Square Gauge\\Textures\\Material_normal.png
+map_Kd C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Gauge model\\Degrees Square Gauge\\Textures\\Material_basecolor.png
+map_Ns C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Gauge model\\Degrees Square Gauge\\Textures\\Material_roughness.png
+refl C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Gauge model\\Degrees Square Gauge\\Textures\\Material_metallic.png
+
+newmtl Material.002
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Gauge model\\Degrees Square Gauge\\Textures\\Material.002_basecolor.png
+map_Ns C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Gauge model\\Degrees Square Gauge\\Textures\\Material.002_roughness.png
+map_d C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Project Files\\Gauge model\\Degrees Square Gauge\\Textures\\Material.002_alpha.png
+
+newmtl Prism_Glass
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+
+newmtl gauge_numbers
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd C:\\Users\\gyzen\\Desktop\\Blender Stuff\\Textures\\Manmade\\Gauge\\TexturesCom_Gauges0143_M decal.png

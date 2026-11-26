@@ -23,8 +23,12 @@ public class TestingIdentificationPanel : MonoBehaviour
 
     [Header("Login Status")]
     [SerializeField] private bool testingUnlocked;
-    [SerializeField] private int successfulTrainingSessions;
-    [SerializeField] private int requiredTrainingSessions;
+
+    [SerializeField]
+    private int successfulTrainingSessions;
+
+    [SerializeField]
+    private int requiredTrainingSessions;
 
     private bool loginCompleted;
 
@@ -122,7 +126,7 @@ public class TestingIdentificationPanel : MonoBehaviour
             }
         }
 
-        // Use the current persistent account manager.
+        // Use the persistent account manager.
 
         if (SafetyTraineeAccountManager.Instance != null)
         {
@@ -138,8 +142,7 @@ public class TestingIdentificationPanel : MonoBehaviour
                 >();
         }
 
-        // Use the progress manager belonging to
-        // the same account manager.
+        // Find the associated training progress manager.
 
         if (accountManager != null)
         {
@@ -200,30 +203,71 @@ public class TestingIdentificationPanel : MonoBehaviour
         }
 
         // Testing Mode is login-only.
-        // New account registration is unavailable.
+        // Hide account registration buttons.
 
         SetChildVisible("SignUpButton", false);
         SetChildVisible("LoginButton", false);
 
-        // Show existing login fields.
+        // ======================================
+        // FIX: RESTORE TITLE AND INSTRUCTIONS
+        // ======================================
 
-        SetChildVisible("TraineeNameInput", true);
-        SetChildVisible("TraineePasswordInput", true);
-        SetChildVisible("ContinueButton", true);
-        SetChildVisible("StatusText", true);
+        SetChildVisible(
+            "IdentificationTitle",
+            true
+        );
 
-        // No account-selection step is required.
+        SetChildVisible(
+            "Instructions",
+            true
+        );
+
+        // ======================================
+        // SHOW LOGIN INPUTS AND BUTTON
+        // ======================================
+
+        SetChildVisible(
+            "TraineeNameInput",
+            true
+        );
+
+        SetChildVisible(
+            "TraineePasswordInput",
+            true
+        );
+
+        SetChildVisible(
+            "ContinueButton",
+            true
+        );
+
+        SetChildVisible(
+            "StatusText",
+            true
+        );
+
+        // No account selection step is required.
 
         SetChildVisible("BackButton", false);
 
+        // ======================================
+        // PANEL SIZE
+        // ======================================
+
         RectTransform rect =
-            identificationPanel.GetComponent<RectTransform>();
+            identificationPanel.GetComponent<
+                RectTransform
+            >();
 
         if (rect != null)
         {
             rect.sizeDelta =
                 new Vector2(850, 540);
         }
+
+        // ======================================
+        // UPDATE PANEL TEXT
+        // ======================================
 
         SetPanelText(
             "IdentificationTitle",
@@ -240,7 +284,9 @@ public class TestingIdentificationPanel : MonoBehaviour
             "LOG IN"
         );
 
-        // Keep password characters hidden.
+        // ======================================
+        // CONFIGURE PASSWORD INPUT
+        // ======================================
 
         if (traineePasswordInput != null)
         {
@@ -259,8 +305,11 @@ public class TestingIdentificationPanel : MonoBehaviour
         );
 
         testingUnlocked = false;
+
         loginCompleted = false;
+
         successfulTrainingSessions = 0;
+
         requiredTrainingSessions = 0;
     }
 
@@ -278,7 +327,9 @@ public class TestingIdentificationPanel : MonoBehaviour
         }
     }
 
-    // Compatibility with existing buttons.
+    // ==========================================
+    // EXISTING BUTTON COMPATIBILITY
+    // ==========================================
 
     public void SelectLogin()
     {
@@ -398,7 +449,7 @@ public class TestingIdentificationPanel : MonoBehaviour
             out message
         );
 
-        // Clear the password after authentication.
+        // Clear password after authentication.
 
         traineePasswordInput.SetTextWithoutNotify("");
 
@@ -467,17 +518,33 @@ public class TestingIdentificationPanel : MonoBehaviour
                 requiredTrainingSessions
             );
 
-            // Keep the login panel visible.
-            // Do not permit PPE exploration.
+            // Keep login panel visible.
 
             return;
         }
 
         // ======================================
-        // SUCCESSFUL LOGIN AND VERIFICATION
+        // SUCCESSFUL LOGIN
         // ======================================
 
         loginCompleted = true;
+
+        // ======================================
+        // START CENTRAL ASSESSMENT SESSION
+        // ======================================
+
+        // Retain the trainee's assessment results
+        // throughout the Safety Room and
+        // Testing Environment scenes.
+
+        TestingAssessmentManager.GetOrCreate()
+            .BeginSession(
+                accountManager.CurrentUsername
+            );
+
+        // ======================================
+        // WELCOME MESSAGE
+        // ======================================
 
         SetStatus(
             "Welcome, " +
@@ -495,11 +562,8 @@ public class TestingIdentificationPanel : MonoBehaviour
         );
 
         // ======================================
-        // NEW: CLOSE THE LOGIN PANEL
+        // CLOSE LOGIN PANEL
         // ======================================
-
-        // The trainee can now move freely toward
-        // the blue zone and explore equipment.
 
         if (identificationPanel != null)
         {
@@ -511,12 +575,14 @@ public class TestingIdentificationPanel : MonoBehaviour
             "Trainee can begin PPE exploration."
         );
 
-        // Do not open the old Training Mode
-        // selection panel or PPE training videos.
+        // The trainee can now walk to the
+        // blue PPE assessment zone.
         //
+        // Do not open Training Mode selection.
         // Do not load Testing Environment yet.
-        // The independent PPE assessment must
-        // be completed first.
+        //
+        // Complete the PPE knowledge assessment,
+        // matching puzzle and mannequin scenarios first.
     }
 
     // ==========================================
@@ -558,7 +624,14 @@ public class TestingIdentificationPanel : MonoBehaviour
             );
 
         if (child == null)
+        {
+            Debug.LogWarning(
+                "[TESTING LOGIN] Text object not found: " +
+                childName
+            );
+
             return;
+        }
 
         TMP_Text text =
             child.GetComponent<TMP_Text>();
@@ -566,6 +639,10 @@ public class TestingIdentificationPanel : MonoBehaviour
         if (text != null)
         {
             text.text = value;
+
+            // Ensure the text component is enabled.
+
+            text.enabled = true;
         }
     }
 

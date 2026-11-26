@@ -24,8 +24,10 @@ public class TestingPPEMatchingController : MonoBehaviour
     private int matchCount = 0;
     private int mistakes = 0;
 
-    // NEW: Records exactly which PPE items
-    // the trainee confused during matching.
+    // ==========================================
+    // ASSESSMENT RECORDS
+    // ==========================================
+
     private readonly List<string> matchingMistakeDetails =
         new List<string>();
 
@@ -34,28 +36,51 @@ public class TestingPPEMatchingController : MonoBehaviour
 
     private readonly string[] equipmentNames =
     {
-        "Safety Helmet",   // 0
-        "Safety Glasses",  // 1
-        "Safety Gloves",   // 2
-        "Safety Vest",     // 3
-        "Safety Boots",    // 4
-        "Coveralls",       // 5
-        "Ear Muffs",       // 6
-        "Gas Mask",        // 7
-        "Face Shield",     // 8
-        "Ear Plugs"        // 9
+        "Safety Helmet",
+        "Safety Glasses",
+        "Safety Gloves",
+        "Safety Vest",
+        "Safety Boots",
+        "Coveralls",
+        "Ear Muffs",
+        "Gas Mask",
+        "Face Shield",
+        "Ear Plugs"
     };
 
-    // Matches the shuffled names in your
-    // existing TestingPPEPuzzlePanelBuilder.
+    // Existing shuffled equipment names.
+
     private readonly int[] nameEquipmentIDs =
     {
         8, 4, 6, 0, 5, 9, 2, 7, 3, 1
     };
 
+    // ==========================================
+    // PUBLIC ASSESSMENT RESULTS
+    // ==========================================
+
     public bool IsComplete => matchCount == 10;
+
     public int MatchCount => matchCount;
+
     public int Mistakes => mistakes;
+
+    public int TotalAttempts => matchCount + mistakes;
+
+    public float MatchingAccuracy
+    {
+        get
+        {
+            if (TotalAttempts == 0)
+                return 0f;
+
+            return 100f * matchCount / TotalAttempts;
+        }
+    }
+
+    // ==========================================
+    // INITIALISATION
+    // ==========================================
 
     private void Start()
     {
@@ -67,6 +92,7 @@ public class TestingPPEMatchingController : MonoBehaviour
             Debug.LogError(
                 "TestingPPEPuzzleCanvas was not found."
             );
+
             return;
         }
 
@@ -77,6 +103,7 @@ public class TestingPPEMatchingController : MonoBehaviour
             Debug.LogError(
                 "PuzzlePanel was not found."
             );
+
             return;
         }
 
@@ -103,10 +130,12 @@ public class TestingPPEMatchingController : MonoBehaviour
                 Debug.LogError(
                     "Missing puzzle button at index: " + i
                 );
+
                 continue;
             }
 
-            // Assign PPE images from the builder.
+            // Preserve existing PPE image assignments.
+
             if (builder != null &&
                 builder.ppeImages != null &&
                 i < builder.ppeImages.Length)
@@ -139,10 +168,14 @@ public class TestingPPEMatchingController : MonoBehaviour
         UpdateProgress();
 
         ShowFeedback(
-            "Select a PPE image, then match its correct name.",
+            "Select a PPE image, then match its name.",
             Color.white
         );
     }
+
+    // ==========================================
+    // EXISTING DESKTOP AND EZPZ INTERACTIONS
+    // ==========================================
 
     private void SetupButton(
         Transform buttonTransform,
@@ -158,11 +191,14 @@ public class TestingPPEMatchingController : MonoBehaviour
                 "Button component missing on " +
                 buttonTransform.name
             );
+
             return;
         }
 
         TestingPPEMatchButton relay =
-            buttonTransform.GetComponent<TestingPPEMatchButton>();
+            buttonTransform.GetComponent<
+                TestingPPEMatchButton
+            >();
 
         if (relay == null)
         {
@@ -174,15 +210,24 @@ public class TestingPPEMatchingController : MonoBehaviour
         relay.isImage = isImage;
         relay.index = index;
 
-        // Preserve the existing desktop interaction.
+        // Preserve existing desktop interaction.
+
         button.onClick.RemoveListener(relay.Activate);
         button.onClick.AddListener(relay.Activate);
     }
 
+    // ==========================================
+    // SELECT PPE IMAGE
+    // ==========================================
+
     public void SelectImage(int id)
     {
-        if (IsComplete || id < 0 || id >= 10)
+        if (IsComplete ||
+            id < 0 ||
+            id >= 10)
+        {
             return;
+        }
 
         if (matched[id])
             return;
@@ -190,17 +235,23 @@ public class TestingPPEMatchingController : MonoBehaviour
         selectedImage = id;
 
         ShowFeedback(
-            "Image selected. Now choose its correct name.",
+            "Image selected. Now choose its name.",
             Color.white
         );
     }
+
+    // ==========================================
+    // SELECT EQUIPMENT NAME
+    // ==========================================
 
     public void SelectName(int nameIndex)
     {
         if (IsComplete ||
             nameIndex < 0 ||
             nameIndex >= 10)
+        {
             return;
+        }
 
         int equipmentID =
             nameEquipmentIDs[nameIndex];
@@ -212,14 +263,25 @@ public class TestingPPEMatchingController : MonoBehaviour
         {
             ShowFeedback(
                 "Select an equipment image first.",
-                Color.yellow
+                Color.white
             );
+
             return;
         }
 
-        if (selectedImage == equipmentID)
+        int imageID = selectedImage;
+
+        bool isCorrect =
+            imageID == equipmentID;
+
+        // ======================================
+        // RECORD SUCCESSFUL MATCH
+        // ======================================
+
+        if (isCorrect)
         {
             matched[equipmentID] = true;
+
             matchCount++;
 
             LockMatchedButton(
@@ -230,20 +292,24 @@ public class TestingPPEMatchingController : MonoBehaviour
                 "PPEName_" + nameIndex
             );
 
-            ShowFeedback(
-                "CORRECT! Equipment matched.",
-                new Color32(90, 255, 130, 255)
-            );
+            // No explicit correctness feedback.
 
-            PlaySound(correctSound);
+            ShowFeedback(
+                "Selection recorded. Continue matching.",
+                Color.white
+            );
         }
+
+        // ======================================
+        // RECORD INCORRECT ATTEMPT
+        // ======================================
+
         else
         {
             mistakes++;
 
-            // NEW: Save the actual incorrect pairing.
             string incorrectMatch =
-                equipmentNames[selectedImage] +
+                equipmentNames[imageID] +
                 " was incorrectly matched with " +
                 equipmentNames[equipmentID] + ".";
 
@@ -251,40 +317,137 @@ public class TestingPPEMatchingController : MonoBehaviour
                 incorrectMatch
             );
 
+            // Record internally.
+            // Do not display incorrect answer feedback.
+
             Debug.Log(
                 "[PPE Matching Mistake] " +
                 incorrectMatch
             );
 
             ShowFeedback(
-                "INCORRECT! Try another match.",
-                new Color32(255, 105, 105, 255)
+                "Selection recorded. Continue matching.",
+                Color.white
             );
+        }
 
-            PlaySound(wrongSound);
+        // ======================================
+        // RECORD INDIVIDUAL MATCHING ATTEMPT
+        // ======================================
+
+        TestingAssessmentManager manager =
+            TestingAssessmentManager.Instance;
+
+        if (manager != null)
+        {
+            manager.RecordAnswer(
+                "SAFETY_02",
+
+                "Matching attempt " +
+                TotalAttempts +
+                ": Identify " +
+                equipmentNames[imageID],
+
+                equipmentNames[equipmentID],
+
+                equipmentNames[imageID],
+
+                isCorrect,
+
+                isCorrect
+                    ? ""
+                    : "Review the appearance and purpose of " +
+                      equipmentNames[imageID] + "."
+            );
         }
 
         selectedImage = -1;
 
         UpdateProgress();
 
+        // Update central assessment after every attempt.
+
+        SaveAssessmentResults();
+
+        // ======================================
+        // CHALLENGE COMPLETED
+        // ======================================
+
         if (IsComplete)
         {
             ShowFeedback(
-                "CHALLENGE 1 COMPLETE! All PPE matched.",
-                new Color32(90, 255, 130, 255)
+                "CHALLENGE 1 COMPLETE! " +
+                "Proceed to the next activity.",
+                Color.white
             );
 
             Debug.Log(
-                "PPE Matching Complete. Mistakes: " +
-                mistakes
+                "[ASSESSMENT] PPE Matching completed."
+            );
+
+            Debug.Log(
+                "[ASSESSMENT] Correct matches: " +
+                matchCount +
+                " | Incorrect attempts: " +
+                mistakes +
+                " | Accuracy: " +
+                MatchingAccuracy.ToString("F1") +
+                "%"
             );
         }
     }
 
+    // ==========================================
+    // SAVE CENTRAL ASSESSMENT RESULTS
+    // ==========================================
+
+    public void SaveAssessmentResults()
+    {
+        TestingAssessmentManager manager =
+            TestingAssessmentManager.Instance;
+
+        if (manager == null)
+        {
+            Debug.LogWarning(
+                "[ASSESSMENT] Central assessment " +
+                "manager was not found."
+            );
+
+            return;
+        }
+
+        manager.RecordTaskResult(
+            "SAFETY_02",
+
+            matchCount,
+
+            IsComplete
+                ? TotalAttempts
+                : 10 + mistakes,
+
+            mistakes,
+
+            IsComplete,
+
+            mistakes == 0
+                ? ""
+                : "Review the appearance and purpose " +
+                  "of incorrectly matched PPE items.",
+
+            matchingMistakeDetails
+        );
+    }
+
+    // ==========================================
+    // LOCK COMPLETED MATCH
+    // ==========================================
+
     private void LockMatchedButton(
         string objectName)
     {
+        if (panel == null)
+            return;
+
         Transform target =
             panel.Find(objectName);
 
@@ -295,27 +458,44 @@ public class TestingPPEMatchingController : MonoBehaviour
             target.GetComponent<Button>();
 
         if (button != null)
+        {
             button.interactable = false;
+        }
 
         Image background =
             target.GetComponent<Image>();
 
         if (background != null)
         {
+            // Neutral grey for completed items.
+            // No green correctness indicator.
+
             background.color =
-                new Color32(45, 125, 95, 255);
+                new Color32(95, 105, 110, 255);
         }
     }
+
+    // ==========================================
+    // UPDATE TRAINEE PROGRESS
+    // ==========================================
 
     private void UpdateProgress()
     {
         if (progressText == null)
             return;
 
+        // Display completion progress only.
+        // Hide mistakes until final assessment.
+
         progressText.text =
-            "MATCHED: " + matchCount +
-            " / 10  |  MISTAKES: " + mistakes;
+            "MATCHED: " +
+            matchCount +
+            " / 10";
     }
+
+    // ==========================================
+    // NEUTRAL STATUS MESSAGE
+    // ==========================================
 
     private void ShowFeedback(
         string message,
@@ -330,14 +510,5 @@ public class TestingPPEMatchingController : MonoBehaviour
         Debug.Log(
             "[PPE Matching] " + message
         );
-    }
-
-    private void PlaySound(AudioClip clip)
-    {
-        if (feedbackAudio != null &&
-            clip != null)
-        {
-            feedbackAudio.PlayOneShot(clip);
-        }
     }
 }
