@@ -17,6 +17,10 @@ public class TestingIdentificationPanel : MonoBehaviour
     public SafetyTraineeAccountManager accountManager;
     public SafetyTraineeProgressManager progressManager;
 
+    // NEW: Navigation arrow reference.
+    [Header("Navigation Indicator")]
+    public SafetyZoneDirectionIndicator directionIndicator;
+
     [Header("Existing Buttons")]
     public Button continueButton;
     public Button backButton;
@@ -209,7 +213,7 @@ public class TestingIdentificationPanel : MonoBehaviour
         SetChildVisible("LoginButton", false);
 
         // ======================================
-        // FIX: RESTORE TITLE AND INSTRUCTIONS
+        // RESTORE TITLE AND INSTRUCTIONS
         // ======================================
 
         SetChildVisible(
@@ -296,6 +300,15 @@ public class TestingIdentificationPanel : MonoBehaviour
             traineePasswordInput.asteriskChar = '*';
 
             traineePasswordInput.ForceLabelUpdate();
+        }
+
+        // ======================================
+        // NEW: HIDE NAVIGATION BEFORE LOGIN
+        // ======================================
+
+        if (directionIndicator != null)
+        {
+            directionIndicator.HideIndicator();
         }
 
         ClearInputs();
@@ -560,6 +573,25 @@ public class TestingIdentificationPanel : MonoBehaviour
             "Testing eligibility verified for: " +
             accountManager.CurrentUsername
         );
+
+        // ======================================
+        // NEW: SHOW AND ANIMATE NAVIGATION ARROW
+        // ======================================
+
+        if (directionIndicator != null)
+        {
+            directionIndicator.ShowIndicator();
+
+            Debug.Log(
+                "[TESTING] Navigation arrow displayed."
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[TESTING] Direction Indicator not assigned."
+            );
+        }
 
         // ======================================
         // CLOSE LOGIN PANEL

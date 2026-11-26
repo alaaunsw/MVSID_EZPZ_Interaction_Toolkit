@@ -2630,7 +2630,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -8720,7 +8720,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4282832895
   m_fontColor: {r: 1, g: 0.84313726, b: 0.27450982, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -8733,7 +8733,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -16183,7 +16183,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4282832895
   m_fontColor: {r: 1, g: 0.84313726, b: 0.27450982, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -16196,7 +16196,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -19785,7 +19785,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 318752018}
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
-  m_LocalPosition: {x: 0, y: 0, z: 10}
+  m_LocalPosition: {x: 0, y: 0, z: 9.87}
   m_LocalScale: {x: 0.0015, y: 0.0015, z: 0.0015}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -19794,7 +19794,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 4.59, y: 4.29}
+  m_AnchoredPosition: {x: 4.59, y: 4.263955}
   m_SizeDelta: {x: 540, y: 760}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &320503516
@@ -20656,7 +20656,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 5.917, y: 4.2639546}
+  m_AnchoredPosition: {x: 6.917, y: 4.464}
   m_SizeDelta: {x: 950, y: 520}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &330662416
@@ -43614,7 +43614,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -53106,7 +53106,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -58502,7 +58502,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 720, y: 0}
+  m_AnchoredPosition: {x: 0, y: -420}
   m_SizeDelta: {x: 560, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &972445766
@@ -97102,7 +97102,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 720, y: 0}
+  m_AnchoredPosition: {x: 0, y: -420}
   m_SizeDelta: {x: 560, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1630502186
@@ -111869,7 +111869,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 5.917, y: 4.2639546}
+  m_AnchoredPosition: {x: 5.917, y: 4.964}
   m_SizeDelta: {x: 950, y: 620}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1918245225
@@ -117521,7 +117521,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 720, y: 0}
+  m_AnchoredPosition: {x: 0, y: -420}
   m_SizeDelta: {x: 560, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2007147792
@@ -117725,7 +117725,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4282832895
   m_fontColor: {r: 1, g: 0.84313726, b: 0.27450982, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -117738,7 +117738,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2

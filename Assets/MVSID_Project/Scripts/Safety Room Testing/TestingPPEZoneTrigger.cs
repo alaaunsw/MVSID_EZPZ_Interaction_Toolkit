@@ -6,6 +6,9 @@ public class TestingPPEZoneTrigger : MonoBehaviour
     [Header("Testing PPE Assessment")]
     public TestingPPEAssessmentManager assessmentManager;
 
+    [Header("Navigation Indicator")]
+    public SafetyZoneDirectionIndicator directionIndicator;
+
     [Header("Existing PPE Interaction Points")]
     public GameObject[] ppeInfoPoints;
 
@@ -24,6 +27,11 @@ public class TestingPPEZoneTrigger : MonoBehaviour
         explorationStarted = false;
 
         HideAllPoints();
+
+        if (directionIndicator != null)
+        {
+            directionIndicator.HideIndicator();
+        }
     }
 
     // ==========================================
@@ -76,18 +84,11 @@ public class TestingPPEZoneTrigger : MonoBehaviour
         if (!other.CompareTag("Player"))
             return;
 
-        // Never reactivate completed questions.
-
         if (IsAssessmentCompleted())
-        {
             return;
-        }
 
         BeginExploration();
     }
-
-    // Supports a trainee who is already
-    // standing in the zone when login completes.
 
     private void OnTriggerStay(Collider other)
     {
@@ -109,12 +110,8 @@ public class TestingPPEZoneTrigger : MonoBehaviour
 
     public void BeginExploration()
     {
-        // Prevent activation after assessment.
-
         if (IsAssessmentCompleted())
-        {
             return;
-        }
 
         if (explorationStarted)
             return;
@@ -172,11 +169,32 @@ public class TestingPPEZoneTrigger : MonoBehaviour
             return;
         }
 
+        explorationStarted = true;
+
+        // ======================================
+        // HIDE NAVIGATION ARROW
+        // ======================================
+
+        if (directionIndicator != null)
+        {
+            directionIndicator.HideIndicator();
+        }
+
+        // ======================================
+        // KEEP BLUE CIRCLE VISIBLE
+        // ======================================
+
+        MeshRenderer zoneRenderer =
+            GetComponent<MeshRenderer>();
+
+        if (zoneRenderer != null)
+        {
+            zoneRenderer.enabled = true;
+        }
+
         // ======================================
         // ACTIVATE ALL PPE INTERACTION POINTS
         // ======================================
-
-        explorationStarted = true;
 
         int activated = 0;
 

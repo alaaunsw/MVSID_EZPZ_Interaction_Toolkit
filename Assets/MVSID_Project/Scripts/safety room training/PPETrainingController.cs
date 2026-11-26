@@ -10,10 +10,12 @@ public class PPETrainingController : MonoBehaviour
     [Header("Training Start Zone")]
     public GameObject trainingStartZone;
 
+    [Header("Navigation Indicator")]
+    public SafetyZoneDirectionIndicator directionIndicator;
+
     [Header("Mannequin Training")]
     public PPETrainingDualMenuBuilder mannequinMenu;
 
-    // NEW: Automatically face the mannequin.
     [Header("Player Rotation")]
     public SafetyPlayerTurnToTarget playerTurn;
 
@@ -31,12 +33,20 @@ public class PPETrainingController : MonoBehaviour
 
     private int currentPPEIndex;
 
+    // =====================================
+    // START
+    // =====================================
+
     private void Start()
     {
         HideAllPoints();
 
         if (trainingStartZone != null)
             trainingStartZone.SetActive(false);
+
+        // Hide the navigation arrow initially.
+        if (directionIndicator != null)
+            directionIndicator.HideIndicator();
 
         HideFeedback();
 
@@ -60,6 +70,35 @@ public class PPETrainingController : MonoBehaviour
     {
         if (greenTick != null)
             greenTick.SetActive(false);
+    }
+
+    // =====================================
+    // CONTROL BLUE ZONE VISIBILITY
+    // =====================================
+
+    private void SetTrainingZoneVisible(bool visible)
+    {
+        if (trainingStartZone == null)
+            return;
+
+        MeshRenderer zoneRenderer =
+            trainingStartZone.GetComponent<MeshRenderer>();
+
+        if (zoneRenderer != null)
+        {
+            zoneRenderer.enabled = visible;
+
+            Debug.Log(
+                "[TRAINING] Blue zone visibility: " +
+                visible
+            );
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[TRAINING] Blue zone Mesh Renderer not found."
+            );
+        }
     }
 
     // =====================================
@@ -103,8 +142,31 @@ public class PPETrainingController : MonoBehaviour
         if (mannequinMenu != null)
             mannequinMenu.HideMenus();
 
+        // =================================
+        // ACTIVATE BLUE TRAINING ZONE
+        // =================================
+
         if (trainingStartZone != null)
+        {
             trainingStartZone.SetActive(true);
+
+            SetTrainingZoneVisible(true);
+        }
+
+        // =================================
+        // SHOW AND ANIMATE NAVIGATION ARROW
+        // =================================
+
+        if (directionIndicator != null)
+        {
+            directionIndicator.ShowIndicator();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "[TRAINING] Direction Indicator not assigned."
+            );
+        }
 
         Debug.Log(
             "Training selected. Enter the blue circle."
@@ -122,6 +184,16 @@ public class PPETrainingController : MonoBehaviour
 
         trainingStarted = true;
 
+        // Keep the blue circle visible.
+        SetTrainingZoneVisible(true);
+
+        // Hide the yellow arrow and instruction text.
+        if (directionIndicator != null)
+        {
+            directionIndicator.HideIndicator();
+        }
+
+        // Start the first PPE video activity.
         ShowCurrentPPE();
 
         Debug.Log("PPE video learning started.");
@@ -223,7 +295,10 @@ public class PPETrainingController : MonoBehaviour
         ShowCurrentPPE();
     }
 
-    // Keep old EZPZ button references harmless.
+    // =====================================
+    // OLD NEXT BUTTON
+    // =====================================
+
     public void NextEquipment()
     {
         Debug.Log(
@@ -241,6 +316,15 @@ public class PPETrainingController : MonoBehaviour
         HideAllPoints();
         HideFeedback();
 
+        // Keep the blue circle visible.
+        SetTrainingZoneVisible(true);
+
+        // Ensure navigation arrow remains hidden.
+        if (directionIndicator != null)
+        {
+            directionIndicator.HideIndicator();
+        }
+
         if (nextEquipmentButton != null)
             nextEquipmentButton.SetActive(false);
 
@@ -249,9 +333,9 @@ public class PPETrainingController : MonoBehaviour
             "Starting mannequin activity."
         );
 
-        // =====================================
-        // NEW: TURN TOWARDS THE MANNEQUIN
-        // =====================================
+        // =================================
+        // TURN TOWARDS THE MANNEQUIN
+        // =================================
 
         if (playerTurn != null)
         {
@@ -264,9 +348,9 @@ public class PPETrainingController : MonoBehaviour
             );
         }
 
-        // =====================================
-        // DISPLAY EXISTING MANNEQUIN MENUS
-        // =====================================
+        // =================================
+        // DISPLAY MANNEQUIN MENUS
+        // =================================
 
         if (mannequinMenu != null)
         {

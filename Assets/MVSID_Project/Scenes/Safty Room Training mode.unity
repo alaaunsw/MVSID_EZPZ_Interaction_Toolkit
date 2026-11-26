@@ -2089,7 +2089,6 @@ GameObject:
   - component: {fileID: 193531935}
   - component: {fileID: 193531934}
   - component: {fileID: 193531933}
-  - component: {fileID: 193531938}
   m_Layer: 0
   m_Name: PPETrainingStartZone
   m_TagString: Untagged
@@ -2205,50 +2204,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &193531938
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 193531932}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b4bcbc1ac451be4fa078b560e85f31f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableTrigger
-  visibleAtRuntime: 0
-  filterString: 
-  allowUnfiltered: 1
-  excludeMode: 0
-  explicitExclusionList: []
-  onTriggerEnter:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 2112983311}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  deleteOnEnter: 0
-  disableOnEnter: 0
-  onTriggerExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onTriggerStay:
-    m_PersistentCalls:
-      m_Calls: []
-  subject: {fileID: 0}
-  triggerActive: 1
-  myRenderer: {fileID: 0}
-  contactList: []
 --- !u!1 &203711807
 GameObject:
   m_ObjectHideFlags: 0
@@ -3135,7 +3090,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SafetyPlayerTurnToTarget
   desktopPlayerRig: {fileID: 175610518}
   xrPlayerRig: {fileID: 0}
-  target: {fileID: 1652028130}
+  target: {fileID: 801209585}
   allowAutomaticVRTurn: 0
   hasTurned: 0
 --- !u!4 &262454003
@@ -8007,6 +7962,30 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 2107093766}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+      - m_Target: {fileID: 193531932}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
   onPrimaryInteractLift:
     m_PersistentCalls:
       m_Calls: []
@@ -10118,19 +10097,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableGeneral
   onPrimaryInteract:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 2112983311}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   onPrimaryInteractLift:
     m_PersistentCalls:
       m_Calls: []
@@ -10535,6 +10502,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PPEMannequinClothingController
   helmetOnMannequin: {fileID: 131922784}
   successSound: {fileID: 0}
+--- !u!4 &801209585 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9dc39ac75a0c4544baa85c1d8d119d05, type: 3}
+  m_PrefabInstance: {fileID: 1319483643}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &825139065
 GameObject:
   m_ObjectHideFlags: 0
@@ -11872,8 +11844,10 @@ Material:
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
+  stringTagMap:
+    RenderType: Opaque
+  disabledShaderPasses:
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -23617,6 +23591,7 @@ MonoBehaviour:
   - {fileID: 1243730808}
   - {fileID: 985119253}
   trainingStartZone: {fileID: 193531932}
+  directionIndicator: {fileID: 2112983312}
   mannequinMenu: {fileID: 357977601}
   playerTurn: {fileID: 262454002}
   greenTick: {fileID: 1675020458}
@@ -24782,7 +24757,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2107093767
 Transform:
   m_ObjectHideFlags: 0
@@ -24953,7 +24928,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &2112983312
 MonoBehaviour:
   m_ObjectHideFlags: 0

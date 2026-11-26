@@ -2535,7 +2535,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 149323403}
   m_LocalRotation: {x: 0.00016088702, y: 0.70454997, z: 0.00013070968, w: 0.7096545}
-  m_LocalPosition: {x: 0, y: 0, z: 3.09}
+  m_LocalPosition: {x: 0, y: 0, z: 2.91}
   m_LocalScale: {x: 0.0025, y: 0.0025, z: 0.0025}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2544,7 +2544,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0.003, y: 89.586, z: 0.024}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1.58, y: 0.9}
+  m_AnchoredPosition: {x: -1.589, y: 0.9}
   m_SizeDelta: {x: 1100, y: 760}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &149323405
@@ -2950,7 +2950,6 @@ GameObject:
   - component: {fileID: 193531934}
   - component: {fileID: 193531933}
   - component: {fileID: 193531938}
-  - component: {fileID: 193531939}
   m_Layer: 0
   m_Name: PPETrainingStartZone
   m_TagString: Untagged
@@ -3079,6 +3078,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestingPPEZoneTrigger
   assessmentManager: {fileID: 1885945293}
+  directionIndicator: {fileID: 2061719988}
   ppeInfoPoints:
   - {fileID: 1413324815}
   - {fileID: 952290525}
@@ -3094,50 +3094,6 @@ MonoBehaviour:
   - {fileID: 549897764}
   - {fileID: 635666404}
   explorationStarted: 0
---- !u!114 &193531939
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 193531932}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9b4bcbc1ac451be4fa078b560e85f31f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InteractableTrigger
-  visibleAtRuntime: 0
-  filterString: 
-  allowUnfiltered: 1
-  excludeMode: 0
-  explicitExclusionList: []
-  onTriggerEnter:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 2061719987}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  deleteOnEnter: 0
-  disableOnEnter: 0
-  onTriggerExit:
-    m_PersistentCalls:
-      m_Calls: []
-  onTriggerStay:
-    m_PersistentCalls:
-      m_Calls: []
-  subject: {fileID: 0}
-  triggerActive: 1
-  myRenderer: {fileID: 0}
-  contactList: []
 --- !u!1 &195363012
 GameObject:
   m_ObjectHideFlags: 0
@@ -8640,8 +8596,10 @@ Material:
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
+  stringTagMap:
+    RenderType: Opaque
+  disabledShaderPasses:
+  - MOTIONVECTORS
   m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
@@ -15372,7 +15330,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 754372163}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -15396,7 +15354,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: -38, y: 0}
   m_SizeDelta: {x: 1100, y: 760}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &754372165
@@ -16288,19 +16246,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableGeneral
   onPrimaryInteract:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 2061719987}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
+      m_Calls: []
   onPrimaryInteractLift:
     m_PersistentCalls:
       m_Calls: []
@@ -29235,7 +29181,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1432863681
 Transform:
   m_ObjectHideFlags: 0
@@ -31802,6 +31748,7 @@ MonoBehaviour:
   statusText: {fileID: 232339862}
   accountManager: {fileID: 2037101572}
   progressManager: {fileID: 2037101574}
+  directionIndicator: {fileID: 2061719988}
   continueButton: {fileID: 752869426}
   backButton: {fileID: 256973416}
   testingUnlocked: 0
@@ -39280,6 +39227,7 @@ MonoBehaviour:
   - {fileID: 1243730808}
   - {fileID: 985119253}
   trainingStartZone: {fileID: 193531932}
+  directionIndicator: {fileID: 0}
   mannequinMenu: {fileID: 357977601}
   playerTurn: {fileID: 0}
   greenTick: {fileID: 1675020458}
@@ -40253,7 +40201,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &2061719988
 MonoBehaviour:
   m_ObjectHideFlags: 0
