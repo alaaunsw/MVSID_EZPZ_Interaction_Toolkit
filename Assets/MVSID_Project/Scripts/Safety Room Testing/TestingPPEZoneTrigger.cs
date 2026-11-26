@@ -23,16 +23,48 @@ public class TestingPPEZoneTrigger : MonoBehaviour
     {
         explorationStarted = false;
 
-        // Hide equipment points until the
-        // trainee enters the assessment zone.
+        HideAllPoints();
+    }
+
+    // ==========================================
+    // HIDE ALL PPE INFORMATION POINTS
+    // ==========================================
+
+    public void HideAllPoints()
+    {
+        if (ppeInfoPoints == null)
+            return;
 
         foreach (GameObject point in ppeInfoPoints)
         {
-            if (point != null)
+            if (point == null)
+                continue;
+
+            if (transform.IsChildOf(point.transform))
+                continue;
+
+            if (assessmentManager != null &&
+                assessmentManager.transform.IsChildOf(
+                    point.transform))
             {
-                point.SetActive(false);
+                continue;
             }
+
+            point.SetActive(false);
         }
+    }
+
+    // ==========================================
+    // CHECK ASSESSMENT COMPLETION
+    // ==========================================
+
+    private bool IsAssessmentCompleted()
+    {
+        return assessmentManager != null &&
+            (
+                assessmentManager.AreAllQuestionsCompleted() ||
+                assessmentManager.IsAssessmentSubmitted()
+            );
     }
 
     // ==========================================
@@ -44,15 +76,25 @@ public class TestingPPEZoneTrigger : MonoBehaviour
         if (!other.CompareTag("Player"))
             return;
 
+        // Never reactivate completed questions.
+
+        if (IsAssessmentCompleted())
+        {
+            return;
+        }
+
         BeginExploration();
     }
 
-    // Also supports a trainee who is already
+    // Supports a trainee who is already
     // standing in the zone when login completes.
 
     private void OnTriggerStay(Collider other)
     {
         if (!other.CompareTag("Player"))
+            return;
+
+        if (IsAssessmentCompleted())
             return;
 
         if (!explorationStarted)
@@ -67,6 +109,13 @@ public class TestingPPEZoneTrigger : MonoBehaviour
 
     public void BeginExploration()
     {
+        // Prevent activation after assessment.
+
+        if (IsAssessmentCompleted())
+        {
+            return;
+        }
+
         if (explorationStarted)
             return;
 
@@ -88,6 +137,7 @@ public class TestingPPEZoneTrigger : MonoBehaviour
             Debug.LogWarning(
                 "Testing progress manager not found."
             );
+
             return;
         }
 
@@ -99,6 +149,7 @@ public class TestingPPEZoneTrigger : MonoBehaviour
                 "Complete the required training " +
                 "sessions before PPE testing."
             );
+
             return;
         }
 
@@ -108,6 +159,16 @@ public class TestingPPEZoneTrigger : MonoBehaviour
                 "Testing PPE Assessment Manager " +
                 "is not assigned."
             );
+
+            return;
+        }
+
+        if (ppeInfoPoints == null)
+        {
+            Debug.LogWarning(
+                "PPE information points are not assigned."
+            );
+
             return;
         }
 
@@ -125,6 +186,7 @@ public class TestingPPEZoneTrigger : MonoBehaviour
                 continue;
 
             point.SetActive(true);
+
             activated++;
         }
 

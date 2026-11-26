@@ -43,10 +43,6 @@ public class TestingPPEAssessmentManager : MonoBehaviour
     public TextMeshProUGUI[] answerLabels =
         new TextMeshProUGUI[4];
 
-    // ==========================================
-    // ORIGINAL VISUAL AND AUDIO FEEDBACK
-    // ==========================================
-
     [Header("Visual Answer Feedback")]
     public GameObject correctTick;
     public GameObject wrongAnswerX;
@@ -145,6 +141,7 @@ public class TestingPPEAssessmentManager : MonoBehaviour
             Debug.LogWarning(
                 "Stop Play Mode before loading questions."
             );
+
             return;
         }
 
@@ -378,8 +375,8 @@ public class TestingPPEAssessmentManager : MonoBehaviour
             feedbackAudioSource.Stop();
         }
 
-        // Keep matching puzzle hidden
-        // until all questions have been answered.
+        // Keep matching puzzle hidden until
+        // all questions have been answered.
 
         if (matchingPuzzlePanel != null)
         {
@@ -749,8 +746,6 @@ public class TestingPPEAssessmentManager : MonoBehaviour
 
         if (isCorrect)
         {
-            // Display green tick.
-
             if (correctTick != null)
             {
                 correctTick.SetActive(true);
@@ -761,15 +756,11 @@ public class TestingPPEAssessmentManager : MonoBehaviour
                 wrongAnswerX.SetActive(false);
             }
 
-            // Display correct message.
-
             if (statusText != null)
             {
                 statusText.text = "CORRECT!";
                 statusText.color = correctColor;
             }
-
-            // Play correct answer sound.
 
             if (feedbackAudioSource != null &&
                 correctSound != null)
@@ -788,8 +779,6 @@ public class TestingPPEAssessmentManager : MonoBehaviour
 
         else
         {
-            // Display red X.
-
             if (correctTick != null)
             {
                 correctTick.SetActive(false);
@@ -800,15 +789,11 @@ public class TestingPPEAssessmentManager : MonoBehaviour
                 wrongAnswerX.SetActive(true);
             }
 
-            // Display incorrect message.
-
             if (statusText != null)
             {
                 statusText.text = "INCORRECT!";
                 statusText.color = wrongColor;
             }
-
-            // Play incorrect answer sound.
 
             if (feedbackAudioSource != null &&
                 wrongSound != null)
@@ -888,21 +873,94 @@ public class TestingPPEAssessmentManager : MonoBehaviour
         }
 
         // ======================================
-        // AUTOMATIC SUBMISSION
+        // CHECK IF ALL QUESTIONS ARE COMPLETED
         // ======================================
 
         if (equipment != null &&
+            equipment.Length > 0 &&
             answers.Count == equipment.Length)
         {
             Debug.Log(
                 "[TESTING] All equipment questions completed."
             );
 
+            // NEW:
+            // Hide every PPE information point
+            // immediately after the final feedback.
+
+            HideAllPPEInfoPoints();
+
+            // Preserve automatic assessment submission.
+
             if (automaticallySubmit)
             {
                 SubmitAssessment();
             }
         }
+    }
+
+    // ==========================================
+    // NEW: HIDE ALL PPE INFORMATION POINTS
+    // ==========================================
+
+    public void HideAllPPEInfoPoints()
+    {
+        if (ppeInfoPoints == null)
+        {
+            Debug.LogWarning(
+                "[TESTING] PPE information points " +
+                "are not assigned."
+            );
+
+            return;
+        }
+
+        int hiddenCount = 0;
+
+        foreach (GameObject point in ppeInfoPoints)
+        {
+            if (point == null)
+                continue;
+
+            // Protect the assessment manager.
+
+            if (transform.IsChildOf(point.transform))
+            {
+                Debug.LogWarning(
+                    "[TESTING] Cannot hide " +
+                    point.name +
+                    " because it contains the assessment manager."
+                );
+
+                continue;
+            }
+
+            // Protect the matching puzzle.
+
+            if (matchingPuzzlePanel != null &&
+                matchingPuzzlePanel.transform.IsChildOf(
+                    point.transform))
+            {
+                Debug.LogWarning(
+                    "[TESTING] Cannot hide " +
+                    point.name +
+                    " because it contains the matching puzzle."
+                );
+
+                continue;
+            }
+
+            // Disable only the information point.
+
+            point.SetActive(false);
+
+            hiddenCount++;
+        }
+
+        Debug.Log(
+            "[TESTING] PPE information points hidden: " +
+            hiddenCount
+        );
     }
 
     // ==========================================
@@ -1249,29 +1307,10 @@ public class TestingPPEAssessmentManager : MonoBehaviour
 
         HideFeedbackSymbols();
 
-        // Hide equipment information points.
+        // Ensure every information point
+        // remains hidden before opening the puzzle.
 
-        if (ppeInfoPoints != null)
-        {
-            foreach (GameObject point in ppeInfoPoints)
-            {
-                if (point == null)
-                    continue;
-
-                // Protect the assessment manager
-                // and matching puzzle.
-
-                if (transform.IsChildOf(
-                    point.transform) ||
-                    matchingPuzzlePanel.transform.IsChildOf(
-                        point.transform))
-                {
-                    continue;
-                }
-
-                point.SetActive(false);
-            }
-        }
+        HideAllPPEInfoPoints();
 
         // Show the matching puzzle.
 
@@ -1335,6 +1374,17 @@ public class TestingPPEAssessmentManager : MonoBehaviour
     public bool IsMatchingPuzzleOpened()
     {
         return matchingPuzzleOpened;
+    }
+
+    // NEW:
+    // Allows other scripts to check whether
+    // every PPE question has been answered.
+
+    public bool AreAllQuestionsCompleted()
+    {
+        return equipment != null &&
+               equipment.Length > 0 &&
+               answers.Count == equipment.Length;
     }
 
     // ==========================================

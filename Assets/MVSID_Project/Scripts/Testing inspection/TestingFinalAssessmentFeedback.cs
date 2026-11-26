@@ -5,7 +5,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
-using UnityEngine.InputSystem;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -14,14 +13,42 @@ using UnityEditor.SceneManagement;
 
 public class TestingFinalAssessmentFeedback : MonoBehaviour
 {
+    // =====================================
+    // CAMERA AND PANEL POSITION
+    // =====================================
+
     [Header("Camera")]
     public Camera playerCamera;
-    public float distanceFromPlayer = 1.6f;
+
+    public float distanceFromPlayer = 2.2f;
+
+    public float verticalOffset = 0f;
+
+    public float panelScale = 0.0015f;
+
+    [Header("Navigation Settings")]
+    [Min(0.1f)]
+    public float navigationDelay = 0.4f;
+
+    private float nextNavigationTime;
+
+    private Vector3 feedbackPosition;
+    private Quaternion feedbackRotation;
+
+    private bool feedbackPositionCaptured;
+
+    // =====================================
+    // PANELS
+    // =====================================
 
     [Header("Panels")]
     public GameObject summaryPanel;
     public GameObject reviewPanel;
     public GameObject completionPanel;
+
+    // =====================================
+    // SUMMARY TEXT
+    // =====================================
 
     [Header("Summary Text")]
     public TextMeshProUGUI traineeText;
@@ -32,6 +59,10 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     public TextMeshProUGUI inspectionResultsText;
     public TextMeshProUGUI improvementText;
 
+    // =====================================
+    // REVIEW TEXT
+    // =====================================
+
     [Header("Review Text")]
     public TextMeshProUGUI reviewTitleText;
     public TextMeshProUGUI reviewStatusText;
@@ -40,6 +71,22 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     public TextMeshProUGUI expectedAnswerText;
     public TextMeshProUGUI answerImprovementText;
     public TextMeshProUGUI pageText;
+
+    // =====================================
+    // LONG REPORT REVIEW
+    // =====================================
+
+    [Header("Long Report Review")]
+    public GameObject standardAnswerLayout;
+    public GameObject longReportLayout;
+
+    public TextMeshProUGUI reportLeftText;
+    public TextMeshProUGUI reportRightText;
+    public TextMeshProUGUI reportRequirementText;
+
+    // =====================================
+    // BUTTONS
+    // =====================================
 
     [Header("Buttons")]
     public Button reviewButton;
@@ -55,6 +102,10 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
     [Header("After Experience")]
     public UnityEvent onExperienceFinished;
+
+    // =====================================
+    // STATUS
+    // =====================================
 
     [Header("Status")]
     [SerializeField] private bool feedbackOpened;
@@ -83,6 +134,7 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
     private class ReviewEntry
     {
+        public string taskID;
         public string title;
         public string question;
         public string submitted;
@@ -102,12 +154,18 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     {
         if (Application.isPlaying)
         {
-            Debug.LogWarning("Stop Play Mode first.");
+            Debug.LogWarning(
+                "Stop Play Mode before building panels."
+            );
+
             return;
         }
 
 #if UNITY_EDITOR
-        Undo.RecordObject(this, "Build Final Feedback");
+        Undo.RecordObject(
+            this,
+            "Build Final Assessment Feedback"
+        );
 
         if (summaryPanel != null)
             Undo.DestroyObjectImmediate(summaryPanel);
@@ -119,15 +177,17 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             Undo.DestroyObjectImmediate(completionPanel);
 #endif
 
+        feedbackPositionCaptured = false;
+
         BuildSummaryPanel();
         BuildReviewPanel();
         BuildCompletionPanel();
 
+        PositionPanel(summaryPanel);
+
         summaryPanel.SetActive(true);
         reviewPanel.SetActive(false);
         completionPanel.SetActive(false);
-
-        PositionPanel(summaryPanel);
 
 #if UNITY_EDITOR
         EditorUtility.SetDirty(this);
@@ -138,7 +198,7 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 #endif
 
         Debug.Log(
-            "[ASSESSMENT] Final feedback panels built."
+            "[ASSESSMENT] Updated feedback panels built."
         );
     }
 
@@ -150,7 +210,7 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     {
         summaryPanel = CreateCanvas(
             "Testing_FinalAssessment_Summary",
-            new Vector2(1250, 900)
+            new Vector2(1400, 1000)
         );
 
         Transform root = summaryPanel.transform;
@@ -159,9 +219,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "Title",
             "FINAL ASSESSMENT RESULTS",
-            new Vector2(0, 395),
-            new Vector2(1190, 65),
-            40,
+            new Vector2(0, 445),
+            new Vector2(1340, 65),
+            43,
             Color.white
         );
 
@@ -169,9 +229,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "Subtitle",
             "INDEPENDENT TESTING COMPLETED",
-            new Vector2(0, 340),
-            new Vector2(1190, 45),
-            27,
+            new Vector2(0, 390),
+            new Vector2(1340, 45),
+            29,
             yellow
         );
 
@@ -179,9 +239,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "Trainee",
             "Trainee: --",
-            new Vector2(0, 292),
-            new Vector2(1190, 45),
-            25,
+            new Vector2(0, 342),
+            new Vector2(1320, 45),
+            28,
             Color.white
         );
 
@@ -192,8 +252,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         RectTransform scoreBox = MakeBox(
             root,
             "ScoreBackground",
-            new Vector2(-420, 147),
-            new Vector2(350, 225)
+            new Vector2(-470, 195),
+            new Vector2(400, 230)
         );
 
         overallScoreText = MakeText(
@@ -201,8 +261,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             "OverallScore",
             "--%",
             new Vector2(0, 35),
-            new Vector2(320, 120),
-            84,
+            new Vector2(370, 110),
+            88,
             yellow
         );
 
@@ -211,8 +271,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             "OverallLabel",
             "OVERALL ACCURACY",
             new Vector2(0, -35),
-            new Vector2(320, 40),
-            24,
+            new Vector2(370, 45),
+            27,
             Color.white
         );
 
@@ -220,8 +280,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             scoreBox,
             "PassStatus",
             "--",
-            new Vector2(0, -80),
-            new Vector2(330, 45),
+            new Vector2(0, -82),
+            new Vector2(380, 45),
             25,
             Color.white
         );
@@ -233,8 +293,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         RectTransform statsBox = MakeBox(
             root,
             "StatisticsBackground",
-            new Vector2(185, 147),
-            new Vector2(810, 225)
+            new Vector2(210, 195),
+            new Vector2(920, 230)
         );
 
         statisticsText = MakeText(
@@ -242,8 +302,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             "Statistics",
             "Session statistics",
             Vector2.zero,
-            new Vector2(755, 195),
-            31,
+            new Vector2(860, 205),
+            34,
             Color.white
         );
 
@@ -254,17 +314,17 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         RectTransform safetyBox = MakeBox(
             root,
             "SafetyResultsBackground",
-            new Vector2(-300, -105),
-            new Vector2(580, 250)
+            new Vector2(-345, -105),
+            new Vector2(650, 350)
         );
 
         MakeText(
             safetyBox,
             "SafetyHeading",
             "SAFETY ASSESSMENT",
-            new Vector2(0, 92),
-            new Vector2(540, 45),
-            27,
+            new Vector2(0, 143),
+            new Vector2(610, 45),
+            30,
             yellow
         );
 
@@ -272,9 +332,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             safetyBox,
             "SafetyResults",
             "Safety task results",
-            new Vector2(0, -22),
-            new Vector2(535, 175),
-            25,
+            new Vector2(0, -20),
+            new Vector2(600, 260),
+            30,
             Color.white
         );
 
@@ -288,17 +348,17 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         RectTransform inspectionBox = MakeBox(
             root,
             "InspectionResultsBackground",
-            new Vector2(300, -105),
-            new Vector2(580, 250)
+            new Vector2(345, -105),
+            new Vector2(650, 350)
         );
 
         MakeText(
             inspectionBox,
             "InspectionHeading",
             "PIPELINE INSPECTION",
-            new Vector2(0, 92),
-            new Vector2(540, 45),
-            27,
+            new Vector2(0, 143),
+            new Vector2(610, 45),
+            30,
             yellow
         );
 
@@ -306,26 +366,28 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             inspectionBox,
             "InspectionResults",
             "Inspection task results",
-            new Vector2(0, -25),
-            new Vector2(540, 180),
-            23,
+            new Vector2(0, -20),
+            new Vector2(610, 265),
+            26,
             Color.white
         );
 
         inspectionResultsText.alignment =
             TextAlignmentOptions.MidlineLeft;
 
+        inspectionResultsText.fontSizeMin = 20;
+
         // =====================================
-        // IMPROVEMENT RECOMMENDATIONS
+        // RECOMMENDATIONS
         // =====================================
 
         MakeText(
             root,
             "ImprovementHeading",
             "RECOMMENDED IMPROVEMENTS",
-            new Vector2(0, -260),
-            new Vector2(1170, 40),
-            26,
+            new Vector2(0, -305),
+            new Vector2(1300, 40),
+            28,
             yellow
         );
 
@@ -333,38 +395,42 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "ImprovementSummary",
             "--",
-            new Vector2(0, -310),
-            new Vector2(1170, 65),
-            24,
+            new Vector2(0, -365),
+            new Vector2(1300, 75),
+            27,
             Color.white
         );
+
+        // =====================================
+        // SUMMARY BUTTONS
+        // =====================================
 
         reviewButton = MakeButton(
             root,
             "ReviewAnswersButton",
             "REVIEW ANSWERS",
-            new Vector2(-300, -395),
-            new Vector2(500, 75)
+            new Vector2(-345, -450),
+            new Vector2(580, 70)
         );
 
         finishButton = MakeButton(
             root,
             "FinishExperienceButton",
             "FINISH EXPERIENCE",
-            new Vector2(300, -395),
-            new Vector2(500, 75)
+            new Vector2(345, -450),
+            new Vector2(580, 70)
         );
     }
 
     // =====================================
-    // DETAILED REVIEW PANEL
+    // REVIEW PANEL
     // =====================================
 
     private void BuildReviewPanel()
     {
         reviewPanel = CreateCanvas(
             "Testing_FinalAssessment_Review",
-            new Vector2(1250, 900)
+            new Vector2(1400, 1000)
         );
 
         Transform root = reviewPanel.transform;
@@ -373,9 +439,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "Title",
             "ASSESSMENT ANSWER REVIEW",
-            new Vector2(0, 395),
-            new Vector2(1190, 65),
-            38,
+            new Vector2(0, 445),
+            new Vector2(1340, 65),
+            40,
             Color.white
         );
 
@@ -383,9 +449,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "ReviewTaskTitle",
             "--",
-            new Vector2(0, 330),
-            new Vector2(1190, 55),
-            29,
+            new Vector2(0, 387),
+            new Vector2(1320, 50),
+            30,
             yellow
         );
 
@@ -393,9 +459,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "AnswerStatus",
             "--",
-            new Vector2(0, 280),
-            new Vector2(1190, 45),
-            26,
+            new Vector2(0, 337),
+            new Vector2(1320, 45),
+            27,
             Color.white
         );
 
@@ -403,30 +469,40 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "Question",
             "--",
-            new Vector2(0, 210),
-            new Vector2(1150, 100),
+            new Vector2(0, 268),
+            new Vector2(1300, 85),
             30,
             Color.white
         );
 
         // =====================================
-        // TRAINEE ANSWER
+        // STANDARD ANSWER LAYOUT
         // =====================================
 
-        RectTransform left = MakeBox(
+        standardAnswerLayout = MakeRect(
             root,
+            "StandardAnswerLayout",
+            Vector2.zero,
+            new Vector2(1400, 1000)
+        ).gameObject;
+
+        Transform standardRoot =
+            standardAnswerLayout.transform;
+
+        RectTransform left = MakeBox(
+            standardRoot,
             "SubmittedAnswerBackground",
-            new Vector2(-300, -10),
-            new Vector2(580, 310)
+            new Vector2(-345, 25),
+            new Vector2(650, 380)
         );
 
         MakeText(
             left,
             "SubmittedHeading",
             "YOUR ANSWER",
-            new Vector2(0, 120),
-            new Vector2(540, 45),
-            27,
+            new Vector2(0, 155),
+            new Vector2(610, 45),
+            28,
             yellow
         );
 
@@ -435,29 +511,25 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             "SubmittedAnswer",
             "--",
             new Vector2(0, -20),
-            new Vector2(530, 220),
-            30,
+            new Vector2(600, 290),
+            31,
             Color.white
         );
 
-        // =====================================
-        // EXPECTED ANSWER
-        // =====================================
-
         RectTransform right = MakeBox(
-            root,
+            standardRoot,
             "ExpectedAnswerBackground",
-            new Vector2(300, -10),
-            new Vector2(580, 310)
+            new Vector2(345, 25),
+            new Vector2(650, 380)
         );
 
         MakeText(
             right,
             "ExpectedHeading",
             "EXPECTED ANSWER / REQUIREMENT",
-            new Vector2(0, 120),
-            new Vector2(540, 45),
-            25,
+            new Vector2(0, 155),
+            new Vector2(610, 45),
+            26,
             yellow
         );
 
@@ -466,10 +538,100 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             "ExpectedAnswer",
             "--",
             new Vector2(0, -20),
-            new Vector2(530, 220),
-            30,
+            new Vector2(600, 290),
+            31,
             Color.white
         );
+
+        // =====================================
+        // NEW: LONG REPORT LAYOUT
+        // =====================================
+
+        longReportLayout = MakeRect(
+            root,
+            "LongReportLayout",
+            Vector2.zero,
+            new Vector2(1400, 1000)
+        ).gameObject;
+
+        Transform reportRoot =
+            longReportLayout.transform;
+
+        RectTransform reportBox = MakeBox(
+            reportRoot,
+            "ReportBackground",
+            new Vector2(0, 48),
+            new Vector2(1340, 330)
+        );
+
+        MakeText(
+            reportBox,
+            "ReportHeading",
+            "YOUR SUBMITTED INSPECTION REPORT",
+            new Vector2(0, 135),
+            new Vector2(1280, 45),
+            27,
+            yellow
+        );
+
+        reportLeftText = MakeText(
+            reportBox,
+            "ReportLeftColumn",
+            "--",
+            new Vector2(-325, -22),
+            new Vector2(605, 235),
+            24,
+            Color.white
+        );
+
+        reportLeftText.alignment =
+            TextAlignmentOptions.TopLeft;
+
+        reportLeftText.fontSizeMin = 15;
+
+        reportRightText = MakeText(
+            reportBox,
+            "ReportRightColumn",
+            "--",
+            new Vector2(325, -22),
+            new Vector2(605, 235),
+            24,
+            Color.white
+        );
+
+        reportRightText.alignment =
+            TextAlignmentOptions.TopLeft;
+
+        reportRightText.fontSizeMin = 15;
+
+        RectTransform requirementBox = MakeBox(
+            reportRoot,
+            "ReportRequirementBackground",
+            new Vector2(0, -172),
+            new Vector2(1340, 95)
+        );
+
+        MakeText(
+            requirementBox,
+            "RequirementHeading",
+            "ASSESSMENT REQUIREMENT",
+            new Vector2(0, 24),
+            new Vector2(1280, 35),
+            23,
+            yellow
+        );
+
+        reportRequirementText = MakeText(
+            requirementBox,
+            "ReportRequirement",
+            "--",
+            new Vector2(0, -20),
+            new Vector2(1270, 45),
+            24,
+            Color.white
+        );
+
+        longReportLayout.SetActive(false);
 
         // =====================================
         // IMPROVEMENT GUIDANCE
@@ -479,9 +641,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "ImprovementHeading",
             "HOW TO IMPROVE",
-            new Vector2(0, -190),
-            new Vector2(1180, 40),
-            27,
+            new Vector2(0, -250),
+            new Vector2(1320, 40),
+            28,
             yellow
         );
 
@@ -489,39 +651,39 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "AnswerImprovement",
             "--",
-            new Vector2(0, -250),
-            new Vector2(1150, 85),
-            26,
+            new Vector2(0, -303),
+            new Vector2(1300, 65),
+            25,
             Color.white
         );
 
         // =====================================
-        // NAVIGATION BUTTONS
+        // NAVIGATION
         // =====================================
 
         previousButton = MakeButton(
             root,
             "PreviousButton",
             "PREVIOUS",
-            new Vector2(-440, -335),
-            new Vector2(260, 65)
+            new Vector2(-510, -385),
+            new Vector2(300, 65)
         );
 
         nextButton = MakeButton(
             root,
             "NextButton",
             "NEXT",
-            new Vector2(440, -335),
-            new Vector2(260, 65)
+            new Vector2(510, -385),
+            new Vector2(300, 65)
         );
 
         pageText = MakeText(
             root,
             "PageNumber",
             "1 / 1",
-            new Vector2(0, -335),
-            new Vector2(450, 55),
-            27,
+            new Vector2(0, -385),
+            new Vector2(400, 55),
+            29,
             Color.white
         );
 
@@ -529,16 +691,16 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "BackToSummary",
             "BACK TO SUMMARY",
-            new Vector2(-300, -405),
-            new Vector2(500, 65)
+            new Vector2(-345, -455),
+            new Vector2(580, 65)
         );
 
         reviewFinishButton = MakeButton(
             root,
             "ReviewFinishButton",
             "FINISH EXPERIENCE",
-            new Vector2(300, -405),
-            new Vector2(500, 65)
+            new Vector2(345, -455),
+            new Vector2(580, 65)
         );
     }
 
@@ -550,7 +712,7 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     {
         completionPanel = CreateCanvas(
             "Testing_ExperienceCompleted",
-            new Vector2(1000, 550)
+            new Vector2(1100, 600)
         );
 
         Transform root = completionPanel.transform;
@@ -559,22 +721,27 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "Title",
             "EXPERIENCE COMPLETED",
-            new Vector2(0, 195),
-            new Vector2(940, 80),
-            45,
+            new Vector2(0, 225),
+            new Vector2(1040, 80),
+            46,
             yellow
         );
 
         MakeText(
             root,
             "CompletionMessage",
+
             "You have completed the Independent Testing " +
-            "experience.\n\nYour assessment results have " +
-            "been recorded for this session.\n\n" +
+            "experience.\n\n" +
+
+            "Your assessment results have been recorded " +
+            "for this session.\n\n" +
+
             "Thank you for participating.",
-            new Vector2(0, 20),
-            new Vector2(880, 240),
-            32,
+
+            new Vector2(0, 30),
+            new Vector2(1000, 260),
+            34,
             Color.white
         );
 
@@ -582,8 +749,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             root,
             "ExitButton",
             "EXIT EXPERIENCE",
-            new Vector2(0, -190),
-            new Vector2(480, 80)
+            new Vector2(0, -215),
+            new Vector2(500, 85)
         );
     }
 
@@ -593,16 +760,57 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
     private void Awake()
     {
+        feedbackOpened = false;
+        experienceFinished = false;
+
+        currentPage = 0;
+        totalPages = 0;
+
+        nextNavigationTime = 0f;
+
+        feedbackPositionCaptured = false;
+
         HideAllPanels();
 
-        BindButton(reviewButton, ShowAnswerReview);
-        BindButton(finishButton, FinishExperience);
-        BindButton(previousButton, PreviousAnswer);
-        BindButton(nextButton, NextAnswer);
-        BindButton(backButton, ReturnToSummary);
-        BindButton(reviewFinishButton, FinishExperience);
-        BindButton(exitButton, ExitExperience);
+        BindButton(
+            reviewButton,
+            ShowAnswerReview
+        );
+
+        BindButton(
+            finishButton,
+            FinishExperience
+        );
+
+        BindButton(
+            previousButton,
+            PreviousAnswer
+        );
+
+        BindButton(
+            nextButton,
+            NextAnswer
+        );
+
+        BindButton(
+            backButton,
+            ReturnToSummary
+        );
+
+        BindButton(
+            reviewFinishButton,
+            FinishExperience
+        );
+
+        BindButton(
+            exitButton,
+            ExitExperience
+        );
     }
+
+    // =====================================
+    // BUTTON BINDING
+    // =====================================
 
     private void BindButton(
         Button button,
@@ -611,6 +819,7 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         if (button == null)
             return;
 
+        button.onClick.RemoveListener(action);
         button.onClick.AddListener(action);
 
         InteractableGeneral ezpz =
@@ -618,8 +827,32 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
         if (ezpz != null)
         {
-            ezpz.onPrimaryInteract.AddListener(action);
+            ezpz.onPrimaryInteract.RemoveListener(
+                action
+            );
+
+            ezpz.onPrimaryInteract.AddListener(
+                action
+            );
         }
+    }
+
+    // =====================================
+    // PREVENT DUPLICATE BUTTON EVENTS
+    // =====================================
+
+    private bool CanNavigate()
+    {
+        if (Time.unscaledTime < nextNavigationTime)
+        {
+            return false;
+        }
+
+        nextNavigationTime =
+            Time.unscaledTime +
+            Mathf.Max(0.1f, navigationDelay);
+
+        return true;
     }
 
     // =====================================
@@ -655,10 +888,13 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
         if (summaryPanel == null ||
             reviewPanel == null ||
-            completionPanel == null)
+            completionPanel == null ||
+            standardAnswerLayout == null ||
+            longReportLayout == null)
         {
             Debug.LogError(
-                "[ASSESSMENT] Build feedback panels first."
+                "[ASSESSMENT] Rebuild the updated " +
+                "feedback panels first."
             );
 
             return;
@@ -677,6 +913,13 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
         CaptureCursor();
 
+        // Capture one consistent panel position
+        // for the entire final feedback experience.
+
+        feedbackPositionCaptured = false;
+
+        CaptureFeedbackPosition();
+
         feedbackOpened = true;
 
         ShowOnly(summaryPanel);
@@ -687,14 +930,15 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     }
 
     // =====================================
-    // POPULATE OVERALL SUMMARY
+    // POPULATE SUMMARY
     // =====================================
 
     private void PopulateSummary(
         TestingAssessmentManager manager)
     {
         traineeText.text =
-            "Trainee: " + manager.TraineeName +
+            "Trainee: " +
+            manager.TraineeName +
             "   |   PIPE_0493";
 
         float overallScore =
@@ -714,11 +958,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         resultText.color =
             passed ? green : red;
 
-        // =====================================
-        // SESSION STATISTICS
-        // =====================================
-
         statisticsText.text =
+
             "Tasks completed: " +
             manager.GetCompletedTaskCount() +
             " / " +
@@ -728,12 +969,12 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             manager.GetFormattedDuration() +
 
             "\nSafety accuracy: " +
-            manager.GetSafetyScore().ToString("0.#") +
-            "%" +
+            manager.GetSafetyScore()
+                .ToString("0.#") + "%" +
 
             "\nInspection accuracy: " +
-            manager.GetInspectionScore().ToString("0.#") +
-            "%";
+            manager.GetInspectionScore()
+                .ToString("0.#") + "%";
 
         StringBuilder safety =
             new StringBuilder();
@@ -743,10 +984,6 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
         List<string> improvementAreas =
             new List<string>();
-
-        // =====================================
-        // INDIVIDUAL TASK RESULTS
-        // =====================================
 
         foreach (var task in manager.Tasks)
         {
@@ -768,8 +1005,14 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
                     task.totalAnswers;
             }
 
+            string taskName =
+                GetSummaryTaskName(
+                    task.taskID,
+                    task.taskName
+                );
+
             string line =
-                task.taskName + ": " + status;
+                taskName + ": " + status;
 
             if (task.taskID.StartsWith("SAFETY_"))
             {
@@ -784,15 +1027,17 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             if (task.contributesToScore &&
                 task.correctAnswers < task.totalAnswers)
             {
-                improvementAreas.Add(task.taskName);
+                improvementAreas.Add(
+                    task.taskName
+                );
             }
         }
 
         safetyResultsText.text =
-            safety.ToString();
+            safety.ToString().TrimEnd();
 
         inspectionResultsText.text =
-            inspection.ToString();
+            inspection.ToString().TrimEnd();
 
         improvementText.text =
             improvementAreas.Count == 0
@@ -805,7 +1050,49 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     }
 
     // =====================================
-    // PREPARE DETAILED REVIEW
+    // SHORTER SUMMARY TASK LABELS
+    // =====================================
+
+    private string GetSummaryTaskName(
+        string taskID,
+        string originalName)
+    {
+        switch (taskID)
+        {
+            case "INSPECTION_01":
+                return "Pipeline Identification";
+
+            case "INSPECTION_02":
+                return "Visual Inspection";
+
+            case "INSPECTION_03":
+                return "Material Loss";
+
+            case "INSPECTION_04":
+                return "Initial Engineer Report";
+
+            case "INSPECTION_05":
+                return "Instrument Readings";
+
+            case "INSPECTION_06":
+                return "Pressure Reduction";
+
+            case "INSPECTION_07":
+                return "Updated Pressure";
+
+            case "INSPECTION_08":
+                return "Corrosion Risk Simulation";
+
+            case "INSPECTION_09":
+                return "Final Inspection Report";
+
+            default:
+                return originalName;
+        }
+    }
+
+    // =====================================
+    // PREPARE ALL REVIEW ENTRIES
     // =====================================
 
     private void BuildReviewEntries(
@@ -822,6 +1109,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
                 {
                     entries.Add(new ReviewEntry
                     {
+                        taskID = task.taskID,
+
                         title = task.taskName,
 
                         question = answer.question,
@@ -844,9 +1133,12 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             {
                 entries.Add(new ReviewEntry
                 {
+                    taskID = task.taskID,
+
                     title = task.taskName,
 
-                    question = "Task performance summary",
+                    question =
+                        "Task performance summary",
 
                     submitted =
                         task.correctAnswers + " / " +
@@ -873,10 +1165,15 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         currentPage = 0;
 
         totalPages = entries.Count;
+
+        Debug.Log(
+            "[ASSESSMENT] Review entries created: " +
+            totalPages
+        );
     }
 
     // =====================================
-    // SHOW ANSWER REVIEW
+    // OPEN ANSWER REVIEW
     // =====================================
 
     public void ShowAnswerReview()
@@ -888,15 +1185,21 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             return;
         }
 
+        if (reviewPanel.activeInHierarchy)
+            return;
+
+        if (!CanNavigate())
+            return;
+
         currentPage = 0;
 
-        PopulateReviewPage();
-
         ShowOnly(reviewPanel);
+
+        PopulateReviewPage();
     }
 
     // =====================================
-    // DISPLAY INDIVIDUAL ANSWER
+    // DISPLAY INDIVIDUAL REVIEW PAGE
     // =====================================
 
     private void PopulateReviewPage()
@@ -914,24 +1217,59 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             entries[currentPage];
 
         reviewTitleText.text =
-            entry.title.ToUpperInvariant();
+            (entry.title ?? "").ToUpperInvariant();
 
         questionText.text =
-            entry.question;
+            entry.question ?? "";
 
         submittedAnswerText.text =
-            entry.submitted;
+            entry.submitted ?? "";
 
         expectedAnswerText.text =
-            entry.expected;
+            entry.expected ?? "";
 
         // =====================================
-        // COMPLETION-ONLY TASKS
+        // SELECT CORRECT ANSWER LAYOUT
+        // =====================================
+
+        bool isReport =
+            entry.taskID == "INSPECTION_04" ||
+            entry.taskID == "INSPECTION_09";
+
+        bool isLongAnswer =
+            !string.IsNullOrEmpty(entry.submitted) &&
+            (
+                entry.submitted.Length > 250 ||
+                entry.submitted.Split('\n').Length > 8
+            );
+
+        bool useReportLayout =
+            isReport || isLongAnswer;
+
+        standardAnswerLayout.SetActive(
+            !useReportLayout
+        );
+
+        longReportLayout.SetActive(
+            useReportLayout
+        );
+
+        if (useReportLayout)
+        {
+            PopulateLongReport(
+                entry.submitted,
+                entry.expected
+            );
+        }
+
+        // =====================================
+        // COMPLETION-ONLY ACTIVITY
         // =====================================
 
         if (!entry.scored)
         {
-            reviewStatusText.text = entry.completed
+            reviewStatusText.text =
+                entry.completed
 
                 ? "COMPLETED - NOT SCORED"
 
@@ -955,12 +1293,13 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         }
 
         // =====================================
-        // SCORED ASSESSMENT ANSWERS
+        // SCORED ANSWERS
         // =====================================
 
         else
         {
-            reviewStatusText.text = entry.correct
+            reviewStatusText.text =
+                entry.correct
 
                 ? "CORRECT ANSWER"
 
@@ -977,11 +1316,13 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
                     entry.improvement
                 )
 
-                ? (entry.correct
+                ? (
+                    entry.correct
 
                     ? "Assessment criterion met."
 
-                    : "Review the expected answer.")
+                    : "Review the expected answer."
+                  )
 
                 : entry.improvement;
         }
@@ -994,11 +1335,166 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             " / " +
             entries.Count;
 
-        previousButton.interactable =
-            currentPage > 0;
+        SetNavigationButton(
+            previousButton,
+            currentPage > 0
+        );
 
-        nextButton.interactable =
-            currentPage < entries.Count - 1;
+        SetNavigationButton(
+            nextButton,
+            currentPage < entries.Count - 1
+        );
+
+        Debug.Log(
+            "[ASSESSMENT] Review page " +
+            (currentPage + 1) +
+            " / " +
+            entries.Count +
+            " | " +
+            entry.title
+        );
+    }
+
+    // =====================================
+    // NEW: LONG REPORT DISPLAY
+    // =====================================
+
+    private void PopulateLongReport(
+        string submitted,
+        string expected)
+    {
+        string content =
+            submitted ?? "";
+
+        content = content.Replace("\r", "");
+
+        string[] rawLines =
+            content.Split('\n');
+
+        List<string> lines =
+            new List<string>();
+
+        // Remove unnecessary blank lines.
+        // Preserve the recorded report contents.
+
+        foreach (string rawLine in rawLines)
+        {
+            string line = rawLine.Trim();
+
+            if (!string.IsNullOrWhiteSpace(line))
+            {
+                lines.Add(line);
+            }
+        }
+
+        int midpoint =
+            Mathf.CeilToInt(lines.Count / 2f);
+
+        // Try to split at an existing report section.
+
+        for (int i = 1; i < lines.Count; i++)
+        {
+            string upper =
+                lines[i].ToUpperInvariant();
+
+            if (upper == "OPERATING CONDITIONS" ||
+                upper == "OPERATING CONDITIONS:")
+            {
+                midpoint = i;
+                break;
+            }
+        }
+
+        StringBuilder left =
+            new StringBuilder();
+
+        StringBuilder right =
+            new StringBuilder();
+
+        for (int i = 0; i < lines.Count; i++)
+        {
+            if (i < midpoint)
+            {
+                left.AppendLine(lines[i]);
+            }
+            else
+            {
+                right.AppendLine(lines[i]);
+            }
+        }
+
+        reportLeftText.text =
+            left.ToString().TrimEnd();
+
+        reportRightText.text =
+            right.ToString().TrimEnd();
+
+        reportRequirementText.text =
+            expected ?? "";
+
+        // Check whether additional space
+        // is needed for unusually long reports.
+
+        reportLeftText.ForceMeshUpdate();
+        reportRightText.ForceMeshUpdate();
+
+        if (reportLeftText.isTextOverflowing ||
+            reportRightText.isTextOverflowing)
+        {
+            Debug.LogWarning(
+                "[ASSESSMENT] Long report exceeds " +
+                "the review layout. Full data remains " +
+                "stored in the assessment manager."
+            );
+        }
+    }
+
+    // =====================================
+    // ENABLE OR DISABLE NAVIGATION
+    // =====================================
+
+    private void SetNavigationButton(
+        Button button,
+        bool available)
+    {
+        if (button == null)
+            return;
+
+        button.interactable = available;
+
+        BoxCollider collider =
+            button.GetComponent<BoxCollider>();
+
+        if (collider != null)
+        {
+            collider.enabled = available;
+        }
+
+        Image image =
+            button.GetComponent<Image>();
+
+        if (image != null)
+        {
+            image.color = available
+
+                ? new Color32(65, 65, 65, 255)
+
+                : new Color32(35, 35, 35, 255);
+        }
+
+        TextMeshProUGUI label =
+            button.GetComponentInChildren<
+                TextMeshProUGUI
+            >(true);
+
+        if (label != null)
+        {
+            label.color = available
+
+                ? Color.white
+
+                : grey;
+        }
     }
 
     // =====================================
@@ -1013,6 +1509,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         {
             return;
         }
+
+        if (!CanNavigate())
+            return;
 
         currentPage--;
 
@@ -1032,6 +1531,11 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             return;
         }
 
+        if (!CanNavigate())
+            return;
+
+        // Always advance exactly one entry.
+
         currentPage++;
 
         PopulateReviewPage();
@@ -1044,10 +1548,15 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     public void ReturnToSummary()
     {
         if (!feedbackOpened ||
-            experienceFinished)
+            experienceFinished ||
+            reviewPanel == null ||
+            !reviewPanel.activeInHierarchy)
         {
             return;
         }
+
+        if (!CanNavigate())
+            return;
 
         ShowOnly(summaryPanel);
     }
@@ -1064,6 +1573,9 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             return;
         }
 
+        if (!CanNavigate())
+            return;
+
         experienceFinished = true;
 
         ShowOnly(completionPanel);
@@ -1079,78 +1591,25 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
     public void ExitExperience()
     {
-        if (!experienceFinished)
+        if (!experienceFinished ||
+            completionPanel == null ||
+            !completionPanel.activeInHierarchy)
+        {
+            return;
+        }
+
+        if (!CanNavigate())
             return;
 
         HideAllPanels();
 
         RestoreCursor();
 
-        // Connect this event to your main menu
-        // or preferred scene transition.
-
         onExperienceFinished?.Invoke();
     }
 
     // =====================================
-    // DESKTOP PHYSICS INTERACTION
-    // =====================================
-
-    private void Update()
-    {
-        if (!feedbackOpened ||
-            playerCamera == null ||
-            Mouse.current == null)
-        {
-            return;
-        }
-
-        if (!Mouse.current.leftButton.wasPressedThisFrame)
-            return;
-
-        Ray ray =
-            playerCamera.ScreenPointToRay(
-                Mouse.current.position.ReadValue()
-            );
-
-        Button[] buttons =
-        {
-            reviewButton,
-            finishButton,
-            previousButton,
-            nextButton,
-            backButton,
-            reviewFinishButton,
-            exitButton
-        };
-
-        foreach (Button button in buttons)
-        {
-            if (button == null ||
-                !button.interactable ||
-                !button.gameObject.activeInHierarchy)
-            {
-                continue;
-            }
-
-            BoxCollider box =
-                button.GetComponent<BoxCollider>();
-
-            if (box != null &&
-                box.Raycast(
-                    ray,
-                    out RaycastHit hit,
-                    100f))
-            {
-                button.onClick.Invoke();
-
-                break;
-            }
-        }
-    }
-
-    // =====================================
-    // HIDE PREVIOUS PANELS
+    // HIDE PREVIOUS INSPECTION PANELS
     // =====================================
 
     private void HidePreviousPanels()
@@ -1171,6 +1630,16 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
             if (transform.IsChildOf(panel.transform))
                 continue;
+
+            if (summaryPanel.transform.IsChildOf(
+                    panel.transform) ||
+                reviewPanel.transform.IsChildOf(
+                    panel.transform) ||
+                completionPanel.transform.IsChildOf(
+                    panel.transform))
+            {
+                continue;
+            }
 
             panel.SetActive(false);
         }
@@ -1193,7 +1662,7 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     }
 
     // =====================================
-    // DISPLAY SELECTED PANEL
+    // SHOW ONE PANEL AT A TIME
     // =====================================
 
     private void ShowOnly(GameObject panel)
@@ -1209,41 +1678,104 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
     }
 
     // =====================================
-    // POSITION PANEL
+    // NEW: CAPTURE UPRIGHT PANEL POSITION
     // =====================================
 
-    private void PositionPanel(GameObject panel)
+    private void CaptureFeedbackPosition()
     {
         if (playerCamera == null)
-            playerCamera = Camera.main;
-
-        if (playerCamera == null ||
-            panel == null)
         {
+            playerCamera = Camera.main;
+        }
+
+        if (playerCamera == null)
+        {
+            Debug.LogWarning(
+                "[ASSESSMENT] Player camera not assigned."
+            );
+
             return;
         }
 
         Transform cam =
             playerCamera.transform;
 
-        panel.transform.position =
-            cam.position +
-            cam.forward * distanceFromPlayer;
+        // Ignore vertical camera movement.
+        // Keep the panel upright.
 
-        panel.transform.rotation =
-            cam.rotation;
+        Vector3 forward =
+            Vector3.ProjectOnPlane(
+                cam.forward,
+                Vector3.up
+            );
+
+        if (forward.sqrMagnitude < 0.001f)
+        {
+            forward = Vector3.ProjectOnPlane(
+                cam.up,
+                Vector3.up
+            );
+        }
+
+        if (forward.sqrMagnitude < 0.001f)
+        {
+            forward = Vector3.forward;
+        }
+
+        forward.Normalize();
+
+        feedbackPosition =
+            cam.position +
+            forward * distanceFromPlayer +
+            Vector3.up * verticalOffset;
+
+        feedbackRotation =
+            Quaternion.LookRotation(
+                forward,
+                Vector3.up
+            );
+
+        feedbackPositionCaptured = true;
+    }
+
+    // =====================================
+    // POSITION FEEDBACK PANEL
+    // =====================================
+
+    private void PositionPanel(GameObject panel)
+    {
+        if (panel == null)
+            return;
+
+        if (!feedbackPositionCaptured ||
+            !Application.isPlaying)
+        {
+            CaptureFeedbackPosition();
+        }
+
+        if (!feedbackPositionCaptured)
+            return;
+
+        panel.transform.SetPositionAndRotation(
+            feedbackPosition,
+            feedbackRotation
+        );
+
+        panel.transform.localScale =
+            Vector3.one * panelScale;
 
         Canvas canvas =
             panel.GetComponent<Canvas>();
 
         if (canvas != null)
         {
-            canvas.worldCamera = playerCamera;
+            canvas.worldCamera =
+                playerCamera;
         }
     }
 
     // =====================================
-    // DESKTOP CURSOR CONTROL
+    // CURSOR CONTROL
     // =====================================
 
     private void CaptureCursor()
@@ -1251,15 +1783,18 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         if (cursorCaptured)
             return;
 
-        oldCursorVisible = Cursor.visible;
+        oldCursorVisible =
+            Cursor.visible;
 
-        oldCursorLock = Cursor.lockState;
+        oldCursorLock =
+            Cursor.lockState;
 
         cursorCaptured = true;
 
-        Cursor.visible = true;
+        Cursor.lockState =
+            CursorLockMode.None;
 
-        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void RestoreCursor()
@@ -1267,9 +1802,11 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         if (!cursorCaptured)
             return;
 
-        Cursor.visible = oldCursorVisible;
+        Cursor.visible =
+            oldCursorVisible;
 
-        Cursor.lockState = oldCursorLock;
+        Cursor.lockState =
+            oldCursorLock;
 
         cursorCaptured = false;
     }
@@ -1314,13 +1851,15 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         rect.sizeDelta = size;
 
         rect.localScale =
-            Vector3.one * 0.0017f;
+            Vector3.one * panelScale;
 
         Image image =
             obj.GetComponent<Image>();
 
+        // Fully opaque background.
+
         image.color =
-            new Color32(10, 10, 10, 250);
+            new Color32(10, 10, 10, 255);
 
         image.raycastTarget = false;
 
@@ -1363,11 +1902,16 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
         rect.pivot =
             Vector2.one * 0.5f;
 
-        rect.anchoredPosition = position;
+        rect.anchoredPosition =
+            position;
 
         rect.sizeDelta = size;
 
-        rect.localScale = Vector3.one;
+        rect.localScale =
+            Vector3.one;
+
+        rect.localRotation =
+            Quaternion.identity;
 
         return rect;
     }
@@ -1438,15 +1982,24 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
         text.enableAutoSizing = true;
 
-        text.fontSizeMin = 16;
+        text.fontSizeMin = 14;
 
         text.fontSizeMax = fontSize;
+
+        // Prevent text from extending outside
+        // its allocated answer area.
+
+        text.overflowMode =
+            TextOverflowModes.Truncate;
+
+        text.margin =
+            new Vector4(8, 4, 8, 4);
 
         return text;
     }
 
     // =====================================
-    // CREATE BUTTON WITH EZPZ INTERACTION
+    // CREATE BUTTON
     // =====================================
 
     private Button MakeButton(
@@ -1476,14 +2029,19 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
 
         button.targetGraphic = image;
 
-        ColorBlock colours = button.colors;
+        ColorBlock colours =
+            button.colors;
 
         colours.normalColor = Color.white;
 
-        colours.highlightedColor = yellow;
+        colours.highlightedColor =
+            yellow;
 
         colours.pressedColor =
             new Color32(255, 235, 155, 255);
+
+        colours.disabledColor =
+            new Color32(100, 100, 100, 255);
 
         button.colors = colours;
 
@@ -1493,7 +2051,7 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
             label,
             Vector2.zero,
             size - new Vector2(15, 10),
-            27,
+            28,
             Color.white
         );
 
@@ -1508,6 +2066,8 @@ public class TestingFinalAssessmentFeedback : MonoBehaviour
                 size.y,
                 8
             );
+
+        // Preserve existing EZPZ interaction.
 
         rect.gameObject.AddComponent<
             InteractableGeneral

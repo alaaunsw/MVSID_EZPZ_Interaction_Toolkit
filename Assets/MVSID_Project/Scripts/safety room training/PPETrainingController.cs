@@ -13,6 +13,10 @@ public class PPETrainingController : MonoBehaviour
     [Header("Mannequin Training")]
     public PPETrainingDualMenuBuilder mannequinMenu;
 
+    // NEW: Automatically face the mannequin.
+    [Header("Player Rotation")]
+    public SafetyPlayerTurnToTarget playerTurn;
+
     [Header("Completion Feedback")]
     public GameObject greenTick;
     public AudioSource successSound;
@@ -70,6 +74,12 @@ public class PPETrainingController : MonoBehaviour
         trainingStarted = false;
         completingVideo = false;
         currentPPEIndex = 0;
+
+        // Reset player rotation for a new session.
+        if (playerTurn != null)
+        {
+            playerTurn.ResetTurn();
+        }
 
         HideFeedback();
 
@@ -238,6 +248,25 @@ public class PPETrainingController : MonoBehaviour
             "All PPE videos completed. " +
             "Starting mannequin activity."
         );
+
+        // =====================================
+        // NEW: TURN TOWARDS THE MANNEQUIN
+        // =====================================
+
+        if (playerTurn != null)
+        {
+            playerTurn.TurnToTarget();
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Player Turn Manager is not assigned."
+            );
+        }
+
+        // =====================================
+        // DISPLAY EXISTING MANNEQUIN MENUS
+        // =====================================
 
         if (mannequinMenu != null)
         {
